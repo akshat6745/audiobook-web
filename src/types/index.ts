@@ -78,6 +78,12 @@ export interface TtsRequest {
   voice: string;
 }
 
+export interface DualVoiceTtsRequest {
+  text: string;
+  paragraphVoice: string;
+  dialogueVoice: string;
+}
+
 export interface Paragraph {
   text: string;
   index?: number;

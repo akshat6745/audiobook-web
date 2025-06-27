@@ -6,6 +6,7 @@ import {
   UserProgress, 
   ReadingProgress,
   TtsRequest,
+  DualVoiceTtsRequest,
   ApiResponse 
 } from '../types';
 
@@ -89,6 +90,34 @@ export const fetchChapterContent = async (
 // Text-to-Speech
 export const generateTts = async (ttsRequest: TtsRequest): Promise<Blob> => {
   const response = await api.post('/tts', ttsRequest, {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+// Text-to-Speech with Dual Voices
+export const generateDualVoiceTts = async (ttsRequest: DualVoiceTtsRequest): Promise<Blob> => {
+  const response = await api.post('/tts-dual-voice', ttsRequest, {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+// Generate TTS for Novel Chapter with Dual Voices
+export const generateChapterAudio = async (
+  novelName: string, 
+  chapterNumber: number, 
+  narratorVoice: string, 
+  dialogueVoice: string
+): Promise<Blob> => {
+  const params = new URLSearchParams({
+    novelName,
+    chapterNumber: chapterNumber.toString(),
+    voice: narratorVoice,
+    dialogueVoice
+  });
+  
+  const response = await api.get(`/novel-with-tts?${params}`, {
     responseType: 'blob',
   });
   return response.data;

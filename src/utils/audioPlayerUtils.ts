@@ -1,5 +1,5 @@
 import { Paragraph, EnhancedParagraph } from '../types';
-import { generateTts } from '../services/api';
+import TTSService from '../services/ttsService';
 
 export const initializeEnhancedParagraphs = (paragraphs: Paragraph[]): EnhancedParagraph[] => {
   return paragraphs.map((paragraph, index) => ({
@@ -14,7 +14,7 @@ export const initializeEnhancedParagraphs = (paragraphs: Paragraph[]): EnhancedP
 export const cleanupAudioUrls = (paragraphs: EnhancedParagraph[]): void => {
   paragraphs.forEach(paragraph => {
     if (paragraph.audioData) {
-      URL.revokeObjectURL(paragraph.audioData);
+      TTSService.cleanupAudioUrl(paragraph.audioData);
     }
   });
 };
@@ -23,7 +23,7 @@ export const clearAudioDataForVoiceChange = (paragraphs: EnhancedParagraph[]): E
   return paragraphs.map(p => ({
     ...p,
     audioData: p.audioData ? (() => { 
-      URL.revokeObjectURL(p.audioData!); 
+      TTSService.cleanupAudioUrl(p.audioData!); 
       return null; 
     })() : null
   }));
@@ -38,20 +38,23 @@ export const calculateNextSpeed = (currentSpeed: number): number => {
 
 export const generateAudioForParagraph = async (
   paragraph: EnhancedParagraph,
-  selectedVoice: string
+  narratorVoice: string,
+  dialogueVoice: string
 ): Promise<{ success: boolean; audioUrl?: string; error?: string }> => {
   try {
-    const audioBlob = await generateTts({ text: paragraph.text, voice: selectedVoice });
-    
     // Clean up previous audio URL for this paragraph
     if (paragraph.audioData) {
-      URL.revokeObjectURL(paragraph.audioData);
+      TTSService.cleanupAudioUrl(paragraph.audioData);
     }
     
-    // Create new audio URL
-    const audioUrl = URL.createObjectURL(audioBlob);
+    // Use dual-voice TTS for better audiobook experience
+    const result = await TTSService.generateDualVoiceTTS(
+      paragraph.text, 
+      narratorVoice, 
+      dialogueVoice
+    );
     
-    return { success: true, audioUrl };
+    return result;
   } catch (err) {
     console.error('TTS Error:', err);
     return { success: false, error: 'Failed to generate audio. Please try again.' };

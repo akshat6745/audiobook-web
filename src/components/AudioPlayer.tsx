@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Draggable from 'react-draggable';
 import { Paragraph, EnhancedParagraph, VoiceOption } from '../types';
-import { VOICE_OPTIONS, SPEED_OPTIONS } from '../utils/config';
+import { SPEED_OPTIONS, DEFAULT_NARRATOR_VOICE, DEFAULT_DIALOGUE_VOICE, NARRATOR_VOICES, DIALOGUE_VOICES } from '../utils/config';
+import TTSService from '../services/ttsService';
 import {
   initializeEnhancedParagraphs,
   cleanupAudioUrls,
@@ -34,8 +35,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   isVisible
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0].value);
-  const [dialogueVoice, setDialogueVoice] = useState(VOICE_OPTIONS[1]?.value || VOICE_OPTIONS[0].value);
+  const [selectedVoice, setSelectedVoice] = useState(DEFAULT_NARRATOR_VOICE);
+  const [dialogueVoice, setDialogueVoice] = useState(DEFAULT_DIALOGUE_VOICE);
   const [playbackSpeed, setPlaybackSpeed] = useState(SPEED_OPTIONS[2].value);
   const [enhancedParagraphs, setEnhancedParagraphs] = useState<EnhancedParagraph[]>([]);
   
@@ -70,7 +71,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
     updateParagraph(paragraphIndex, { isLoading: true, errors: null });
     
-    const result = await generateAudioForParagraph(paragraph, selectedVoice);
+    const result = await generateAudioForParagraph(paragraph, selectedVoice, dialogueVoice);
     
     if (result.success && result.audioUrl) {
       updateParagraph(paragraphIndex, { 
@@ -168,6 +169,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const currentParagraph = enhancedParagraphs[currentParagraphIndex];
   const isCurrentLoading = currentParagraph?.isLoading || false;
   const currentError = currentParagraph?.errors || null;
+  const hasDialogue = currentParagraph ? TTSService.hasDialogue(currentParagraph.text) : false;
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
@@ -192,9 +194,16 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         {/* Compact Current Paragraph Info */}
         <div className="p-3 border-b border-gray-200/30 dark:border-gray-700/30">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
-              {currentParagraphIndex + 1}/{enhancedParagraphs.length}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
+                {currentParagraphIndex + 1}/{enhancedParagraphs.length}
+              </span>
+              {hasDialogue && (
+                <span className="text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  💬 Dual Voice
+                </span>
+              )}
+            </div>
             <button
               onClick={onClose}
               className="p-1.5 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
@@ -251,32 +260,54 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           {/* Voice Controls Grid */}
           <div className="grid grid-cols-1 gap-2 text-xs">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Narrator Voice</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                Narrator Voice (Male Recommended)
+              </label>
               <select
                 value={selectedVoice}
                 onChange={(e) => handleVoiceChange(e.target.value)}
                 className="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs focus:ring-1 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
               >
-                {VOICE_OPTIONS.map((voice: VoiceOption) => (
-                  <option key={voice.value} value={voice.value}>
-                    {voice.label}
-                  </option>
-                ))}
+                <optgroup label="👨 Male Voices (Recommended for Narration)">
+                  {NARRATOR_VOICES.map((voice: VoiceOption) => (
+                    <option key={voice.value} value={voice.value}>
+                      {voice.label}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="👩 Female Voices">
+                  {DIALOGUE_VOICES.map((voice: VoiceOption) => (
+                    <option key={voice.value} value={voice.value}>
+                      {voice.label}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Dialogue Voice</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                Dialogue Voice (Female Recommended)
+              </label>
               <select
                 value={dialogueVoice}
                 onChange={(e) => handleDialogueVoiceChange(e.target.value)}
                 className="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs focus:ring-1 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
               >
-                {VOICE_OPTIONS.map((voice: VoiceOption) => (
-                  <option key={voice.value} value={voice.value}>
-                    {voice.label}
-                  </option>
-                ))}
+                <optgroup label="👩 Female Voices (Recommended for Dialogue)">
+                  {DIALOGUE_VOICES.map((voice: VoiceOption) => (
+                    <option key={voice.value} value={voice.value}>
+                      {voice.label}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="👨 Male Voices">
+                  {NARRATOR_VOICES.map((voice: VoiceOption) => (
+                    <option key={voice.value} value={voice.value}>
+                      {voice.label}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
           </div>

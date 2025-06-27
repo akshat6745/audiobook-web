@@ -4,7 +4,7 @@ export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8
 // Default voice for TTS
 export const DEFAULT_VOICE = 'en-US-ChristopherNeural';
 
-// Voice options available for TTS
+// Voice options available for TTS - Based on TTS Dual-Voice API Guide
 export const VOICE_OPTIONS = [
   { label: 'Ava {Female, US}', value: 'en-US-AvaMultilingualNeural'},
   { label: 'Christopher (Male, US)', value: 'en-US-ChristopherNeural' },
@@ -111,6 +111,39 @@ export const setAudioSettings = (settings: AudioSettings): void => {
     console.error('Error setting audio settings:', error);
   }
 };
+
+// Voice categories for better organization
+export const NARRATOR_VOICES = [
+  { label: 'Ava {Female, US}', value: 'en-US-AvaMultilingualNeural'},
+  { label: 'Christopher (Male, US)', value: 'en-US-ChristopherNeural' },
+  { label: 'Jenny (Female, US)', value: 'en-US-JennyNeural' },
+  { label: 'Sonia (Female, UK)', value: 'en-GB-SoniaNeural' },
+  { label: 'Ryan (Male, UK)', value: 'en-GB-RyanNeural' },
+  { label: 'Andrew (Male, US, Multilingual)', value: 'en-US-AndrewMultilingualNeural' },
+  { label: 'Emma (Female, US, Multilingual)', value: 'en-US-EmmaMultilingualNeural' }
+];
+
+export const DIALOGUE_VOICES = [
+  { label: 'Ava {Female, US}', value: 'en-US-AvaMultilingualNeural'},
+  { label: 'Christopher (Male, US)', value: 'en-US-ChristopherNeural' },
+  { label: 'Jenny (Female, US)', value: 'en-US-JennyNeural' },
+  { label: 'Sonia (Female, UK)', value: 'en-GB-SoniaNeural' },
+  { label: 'Ryan (Male, UK)', value: 'en-GB-RyanNeural' },
+  { label: 'Andrew (Male, US, Multilingual)', value: 'en-US-AndrewMultilingualNeural' },
+  { label: 'Emma (Female, US, Multilingual)', value: 'en-US-EmmaMultilingualNeural' }
+];
+
+// Default voice combinations for optimal contrast
+export const DEFAULT_NARRATOR_VOICE = 'en-US-AvaMultilingualNeural';
+export const DEFAULT_DIALOGUE_VOICE = 'en-GB-RyanNeural';
+
+// Helper function to get recommended voice pairs
+export const getRecommendedVoicePairs = () => [
+  { narrator: 'en-US-ChristopherNeural', dialogue: 'en-US-AriaNeural', description: 'Deep Male + Expressive Female' },
+  { narrator: 'en-US-EricNeural', dialogue: 'en-US-JennyNeural', description: 'Warm Male + Clear Female' },
+  { narrator: 'en-US-GuyNeural', dialogue: 'en-US-MichelleNeural', description: 'Professional Male + Engaging Female' },
+  { narrator: 'en-US-RogerNeural', dialogue: 'en-US-SaraNeural', description: 'Mature Male + Pleasant Female' }
+];
 
 // Helper function to parse chapter titles
 export const parseChapterTitle = (title: string) => {

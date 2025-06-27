@@ -6,14 +6,13 @@ export const DEFAULT_VOICE = 'en-US-ChristopherNeural';
 
 // Voice options available for TTS
 export const VOICE_OPTIONS = [
+  { label: 'Ava {Female, US}', value: 'en-US-AvaMultilingualNeural'},
   { label: 'Christopher (Male, US)', value: 'en-US-ChristopherNeural' },
-  { label: 'Aria (Female, US)', value: 'en-US-AriaNeural' },
   { label: 'Jenny (Female, US)', value: 'en-US-JennyNeural' },
-  { label: 'Guy (Male, US)', value: 'en-US-GuyNeural' },
-  { label: 'Mia (Female, US)', value: 'en-US-MiaNeural' },
-  { label: 'Emma (Female, US)', value: 'en-US-EmmaNeural' },
-  { label: 'Brian (Male, UK)', value: 'en-GB-BrianNeural' },
-  { label: 'Libby (Female, UK)', value: 'en-GB-LibbyNeural' },
+  { label: 'Sonia (Female, UK)', value: 'en-GB-SoniaNeural' },
+  { label: 'Ryan (Male, UK)', value: 'en-GB-RyanNeural' },
+  { label: 'Andrew (Male, US, Multilingual)', value: 'en-US-AndrewMultilingualNeural' },
+  { label: 'Emma (Female, US, Multilingual)', value: 'en-US-EmmaMultilingualNeural' }
 ];
 
 // Speed options for playback

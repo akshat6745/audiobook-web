@@ -205,20 +205,23 @@ const ChapterContentPage: React.FC = () => {
         />
       )}
 
-      {/* Floating Audio Button */}
+      {/* Compact Mobile-Friendly Floating Audio Button */}
       {!isAudioPlayerVisible && paragraphs.length > 0 && (
         <button
           onClick={() => {
             setActiveParagraphIndex(0);
             setIsAudioPlayerVisible(true);
           }}
-          className="fixed bottom-6 right-6 p-4 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-all z-50"
-          title="Start Audio Playback"
+          className="fixed bottom-4 right-4 p-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl shadow-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 z-50 hover:scale-105 transform-gpu backdrop-blur-sm border border-white/20"
+          title="Start Audio Playbook"
         >
-          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.29 13.5A1 1 0 014 12.5v-5a1 1 0 01.29-.707l4.093-3.316zM15.657 5.343a1 1 0 011.414 0 7 7 0 010 9.9 1 1 0 11-1.414-1.414 5 5 0 000-7.072 1 1 0 010-1.414z" />
-            <path d="M13.243 7.757a1 1 0 011.414 0 3 3 0 010 4.243 1 1 0 11-1.414-1.414 1 1 0 000-1.414 1 1 0 010-1.415z" />
-          </svg>
+          <div className="relative">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.29 13.5A1 1 0 014 12.5v-5a1 1 0 01.29-.707l4.093-3.316zM15.657 5.343a1 1 0 011.414 0 7 7 0 010 9.9 1 1 0 11-1.414-1.414 5 5 0 000-7.072 1 1 0 010-1.414z" />
+              <path d="M13.243 7.757a1 1 0 011.414 0 3 3 0 010 4.243 1 1 0 11-1.414-1.414 1 1 0 000-1.414 1 1 0 010-1.415z" />
+            </svg>
+            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          </div>
         </button>
       )}
     </div>

@@ -82,3 +82,11 @@ export interface Paragraph {
   text: string;
   index?: number;
 }
+
+export interface EnhancedParagraph {
+  paragraphNumber: number;
+  text: string;
+  isLoading: boolean;
+  audioData: string | null; // URL for the audio blob
+  errors: string | null;
+}

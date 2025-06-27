@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Draggable from 'react-draggable';
-import { Paragraph } from '../types';
+import { Paragraph, EnhancedParagraph, VoiceOption } from '../types';
 import { VOICE_OPTIONS, SPEED_OPTIONS } from '../utils/config';
-import { generateTts } from '../services/api';
+import {
+  initializeEnhancedParagraphs,
+  cleanupAudioUrls,
+  clearAudioDataForVoiceChange,
+  calculateNextSpeed,
+  generateAudioForParagraph,
+  updateParagraphInList
+} from '../utils/audioPlayerUtils';
 import {
   SkipPrevious,
   PlayArrow,
   Pause,
   SkipNext,
-  Close,
-  DragIndicator
+  Close
 } from '@mui/icons-material';
 
 interface AudioPlayerProps {
@@ -28,39 +34,23 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   isVisible
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0].value);
-  const [playbackSpeed, setPlaybackSpeed] = useState(SPEED_OPTIONS[1].value);
-  const [error, setError] = useState<string | null>(null);
+  const [dialogueVoice, setDialogueVoice] = useState(VOICE_OPTIONS[1]?.value || VOICE_OPTIONS[0].value);
+  const [playbackSpeed, setPlaybackSpeed] = useState(SPEED_OPTIONS[2].value);
+  const [enhancedParagraphs, setEnhancedParagraphs] = useState<EnhancedParagraph[]>([]);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const currentAudioUrl = useRef<string | null>(null);
   const nodeRef = useRef<HTMLDivElement | null>(null);
 
-  // Clean up audio URL when component unmounts or changes
+  // Initialize enhanced paragraphs from basic paragraphs
   useEffect(() => {
-    return () => {
-      if (currentAudioUrl.current) {
-        URL.revokeObjectURL(currentAudioUrl.current);
-      }
-    };
-  }, []);
+    setEnhancedParagraphs(initializeEnhancedParagraphs(paragraphs));
+  }, [paragraphs]);
 
-  // Handle audio ended - move to next paragraph
+  // Clean up audio URLs when component unmounts
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleEnded = () => {
-      setIsPlaying(false);
-      if (currentParagraphIndex < paragraphs.length - 1) {
-        onParagraphChange(currentParagraphIndex + 1);
-      }
-    };
-
-    audio.addEventListener('ended', handleEnded);
-    return () => audio.removeEventListener('ended', handleEnded);
-  }, [currentParagraphIndex, paragraphs.length, onParagraphChange]);
+    return () => cleanupAudioUrls(enhancedParagraphs);
+  }, [enhancedParagraphs]);
 
   // Update playback speed when changed
   useEffect(() => {
@@ -69,51 +59,65 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     }
   }, [playbackSpeed]);
 
-  const generateAudio = async (text: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  // Helper function to update a specific paragraph
+  const updateParagraph = (index: number, updates: Partial<EnhancedParagraph>) => {
+    setEnhancedParagraphs(prev => updateParagraphInList(prev, index, updates));
+  };
+
+  const generateAudio = async (paragraphIndex: number) => {
+    const paragraph = enhancedParagraphs[paragraphIndex];
+    if (!paragraph) return false;
+
+    updateParagraph(paragraphIndex, { isLoading: true, errors: null });
+    
+    const result = await generateAudioForParagraph(paragraph, selectedVoice);
+    
+    if (result.success && result.audioUrl) {
+      updateParagraph(paragraphIndex, { 
+        isLoading: false, 
+        audioData: result.audioUrl,
+        errors: null 
+      });
       
-      const audioBlob = await generateTts({ text, voice: selectedVoice });
-      
-      // Clean up previous audio URL
-      if (currentAudioUrl.current) {
-        URL.revokeObjectURL(currentAudioUrl.current);
-      }
-      
-      // Create new audio URL
-      currentAudioUrl.current = URL.createObjectURL(audioBlob);
-      
-      if (audioRef.current) {
-        audioRef.current.src = currentAudioUrl.current;
+      if (audioRef.current && paragraphIndex === currentParagraphIndex) {
+        audioRef.current.src = result.audioUrl;
         audioRef.current.playbackRate = playbackSpeed;
       }
       
-      setIsLoading(false);
       return true;
-    } catch (err) {
-      setIsLoading(false);
-      setError('Failed to generate audio. Please try again.');
-      console.error('TTS Error:', err);
+    } else {
+      updateParagraph(paragraphIndex, { 
+        isLoading: false, 
+        errors: result.error || 'Failed to generate audio' 
+      });
       return false;
     }
   };
 
   const handlePlay = async () => {
-    if (!paragraphs[currentParagraphIndex]) return;
+    const currentParagraph = enhancedParagraphs[currentParagraphIndex];
+    if (!currentParagraph) return;
 
-    const currentText = paragraphs[currentParagraphIndex].text;
-    
-    if (!audioRef.current?.src || audioRef.current.src !== currentAudioUrl.current) {
-      const success = await generateAudio(currentText);
+    // Check if we need to generate audio or if it's already available
+    if (!currentParagraph.audioData && !currentParagraph.isLoading) {
+      const success = await generateAudio(currentParagraphIndex);
       if (!success) return;
     }
 
+    // Wait for audio generation if still loading
+    if (currentParagraph.isLoading) return;
+
     try {
-      await audioRef.current?.play();
-      setIsPlaying(true);
+      if (audioRef.current && currentParagraph.audioData) {
+        audioRef.current.src = currentParagraph.audioData;
+        audioRef.current.playbackRate = playbackSpeed;
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
     } catch (err) {
-      setError('Failed to play audio. Please try again.');
+      updateParagraph(currentParagraphIndex, { 
+        errors: 'Failed to play audio. Please try again.' 
+      });
       console.error('Audio play error:', err);
     }
   };
@@ -132,7 +136,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   };
 
   const handleNext = () => {
-    if (currentParagraphIndex < paragraphs.length - 1) {
+    if (currentParagraphIndex < enhancedParagraphs.length - 1) {
       audioRef.current?.pause();
       setIsPlaying(false);
       onParagraphChange(currentParagraphIndex + 1);
@@ -141,13 +145,29 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const handleVoiceChange = (voice: string) => {
     setSelectedVoice(voice);
-    audioRef.current?.pause(); // Pause current audio when voice changes
+    audioRef.current?.pause();
     setIsPlaying(false);
+    // Clear audio data for all paragraphs so they regenerate with new voice
+    setEnhancedParagraphs(prev => clearAudioDataForVoiceChange(prev));
+  };
+
+  const handleDialogueVoiceChange = (voice: string) => {
+    setDialogueVoice(voice);
+    audioRef.current?.pause();
+    setIsPlaying(false);
+    // Clear audio data for all paragraphs so they regenerate with new voice
+    setEnhancedParagraphs(prev => clearAudioDataForVoiceChange(prev));
+  };
+
+  const handleSpeedClick = () => {
+    setPlaybackSpeed(calculateNextSpeed(playbackSpeed));
   };
 
   if (!isVisible) return null;
 
-  console.log('AudioPlayer rendering:', { isVisible, paragraphs: paragraphs.length, currentParagraphIndex });
+  const currentParagraph = enhancedParagraphs[currentParagraphIndex];
+  const isCurrentLoading = currentParagraph?.isLoading || false;
+  const currentError = currentParagraph?.errors || null;
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
@@ -156,58 +176,55 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         defaultPosition={{ x: 20, y: 100 }}
         nodeRef={nodeRef}
       >
-        <div ref={nodeRef} className="absolute bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 min-w-[300px] pointer-events-auto">
-        {/* Drag Handle Header */}
-        <div className="drag-handle flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-t-lg cursor-move">
-          <div className="flex items-center gap-2">
-            <DragIndicator className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Audio Player
-            </span>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <Close className="w-4 h-4" />
-          </button>
-        </div>
+        <div ref={nodeRef} className="absolute bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-2xl z-50 min-w-[280px] max-w-[320px] pointer-events-auto transition-all duration-300 hover:shadow-3xl">
+        
+        {/* Drag Handle - Invisible but functional */}
+        <div className="drag-handle absolute top-0 left-0 right-0 h-3 cursor-move"></div>
 
         {/* Error Display */}
-        {error && (
-          <div className="mx-2 mt-2 p-2 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded text-red-700 dark:text-red-300 text-xs">
-            {error}
+        {currentError && (
+          <div className="mx-3 mt-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg text-red-700 dark:text-red-300 text-xs flex items-center gap-1.5 animate-fadeIn">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+            {currentError}
           </div>
         )}
 
-        {/* Current Paragraph Info */}
-        <div className="p-2 border-b border-gray-200 dark:border-gray-600">
-          <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">
-            {currentParagraphIndex + 1} / {paragraphs.length}
-          </p>
-          <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2">
-            {paragraphs[currentParagraphIndex]?.text?.slice(0, 100) || 'No content'}...
+        {/* Compact Current Paragraph Info */}
+        <div className="p-3 border-b border-gray-200/30 dark:border-gray-700/30">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
+              {currentParagraphIndex + 1}/{enhancedParagraphs.length}
+            </span>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+            >
+              <Close className="w-4 h-4" />
+            </button>
+          </div>
+          <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">
+            {currentParagraph?.text?.slice(0, 100) || 'No content'}...
           </p>
         </div>
 
-        {/* Essential Controls */}
+        {/* Compact Controls */}
         <div className="p-3">
           <div className="flex items-center justify-center gap-2 mb-3">
             <button
               onClick={handlePrevious}
               disabled={currentParagraphIndex === 0}
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-500"
+              className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 disabled:hover:scale-100 shadow-sm hover:shadow-md"
             >
               <SkipPrevious className="w-4 h-4" />
             </button>
 
             <button
               onClick={isPlaying ? handlePause : handlePlay}
-              disabled={isLoading}
-              className="p-3 rounded-full bg-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600"
+              disabled={isCurrentLoading}
+              className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg transform-gpu"
             >
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              {isCurrentLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
               ) : isPlaying ? (
                 <Pause className="w-4 h-4" />
               ) : (
@@ -217,38 +234,51 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
             <button
               onClick={handleNext}
-              disabled={currentParagraphIndex === paragraphs.length - 1}
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-500"
+              disabled={currentParagraphIndex === enhancedParagraphs.length - 1}
+              className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 disabled:hover:scale-100 shadow-sm hover:shadow-md"
             >
               <SkipNext className="w-4 h-4" />
             </button>
+
+            <button
+              onClick={handleSpeedClick}
+              className="px-3 py-2 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg transform-gpu text-xs font-semibold min-w-[3rem]"
+            >
+              {playbackSpeed}×
+            </button>
           </div>
 
-          {/* Compact Voice & Speed Controls */}
-          <div className="flex gap-2 text-xs">
-            <select
-              value={selectedVoice}
-              onChange={(e) => handleVoiceChange(e.target.value)}
-              className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
-            >
-              {VOICE_OPTIONS.map((voice) => (
-                <option key={voice.value} value={voice.value}>
-                  {voice.label}
-                </option>
-              ))}
-            </select>
-            
-            <select
-              value={playbackSpeed}
-              onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
-            >
-              {SPEED_OPTIONS.map((speed) => (
-                <option key={speed.value} value={speed.value}>
-                  {speed.label}
-                </option>
-              ))}
-            </select>
+          {/* Voice Controls Grid */}
+          <div className="grid grid-cols-1 gap-2 text-xs">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Narrator Voice</label>
+              <select
+                value={selectedVoice}
+                onChange={(e) => handleVoiceChange(e.target.value)}
+                className="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs focus:ring-1 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                {VOICE_OPTIONS.map((voice: VoiceOption) => (
+                  <option key={voice.value} value={voice.value}>
+                    {voice.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Dialogue Voice</label>
+              <select
+                value={dialogueVoice}
+                onChange={(e) => handleDialogueVoiceChange(e.target.value)}
+                className="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs focus:ring-1 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                {VOICE_OPTIONS.map((voice: VoiceOption) => (
+                  <option key={voice.value} value={voice.value}>
+                    {voice.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

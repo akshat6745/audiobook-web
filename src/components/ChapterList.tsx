@@ -22,29 +22,69 @@ const ChapterList: React.FC<ChapterListProps> = ({
   const renderPaginationControls = () => {
     if (totalPages <= 1) return null;
 
-    const pageNumbers = [];
-    const showPages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(showPages / 2));
-    let endPage = Math.min(totalPages, startPage + showPages - 1);
+    const renderPageButton = (page: number, isActive = false) => (
+      <button
+        key={page}
+        onClick={() => onPageChange(page)}
+        className={`px-3 py-2 text-sm rounded-md font-medium ${
+          isActive
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-700 text-white hover:bg-gray-600'
+        }`}
+      >
+        {page}
+      </button>
+    );
 
-    if (endPage - startPage + 1 < showPages) {
-      startPage = Math.max(1, endPage - showPages + 1);
-    }
+    const renderEllipsis = (key: string) => (
+      <span key={key} className="px-3 py-2 text-sm text-gray-400">
+        ...
+      </span>
+    );
 
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(i);
-    }
+    const getPageNumbers = () => {
+      const pages = [];
+      const showPages = 5; // Number of pages to show around current page
+      
+      // Always show first page
+      pages.push(renderPageButton(1, currentPage === 1));
+      
+      if (totalPages <= 7) {
+        // If we have 7 or fewer pages, show all pages
+        for (let i = 2; i <= totalPages; i++) {
+          pages.push(renderPageButton(i, currentPage === i));
+        }
+      } else {
+        // More complex logic for many pages
+        if (currentPage <= 4) {
+          // Near the beginning
+          for (let i = 2; i <= 5; i++) {
+            pages.push(renderPageButton(i, currentPage === i));
+          }
+          pages.push(renderEllipsis('end-ellipsis'));
+          pages.push(renderPageButton(totalPages, currentPage === totalPages));
+        } else if (currentPage >= totalPages - 3) {
+          // Near the end
+          pages.push(renderEllipsis('start-ellipsis'));
+          for (let i = totalPages - 4; i <= totalPages; i++) {
+            pages.push(renderPageButton(i, currentPage === i));
+          }
+        } else {
+          // In the middle
+          pages.push(renderEllipsis('start-ellipsis'));
+          for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+            pages.push(renderPageButton(i, currentPage === i));
+          }
+          pages.push(renderEllipsis('end-ellipsis'));
+          pages.push(renderPageButton(totalPages, currentPage === totalPages));
+        }
+      }
+      
+      return pages;
+    };
 
     return (
       <div className="flex items-center justify-center space-x-2 mt-8">
-        <button
-          onClick={() => onPageChange(1)}
-          disabled={currentPage === 1}
-          className="px-3 py-2 text-sm bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-        >
-          First
-        </button>
-        
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
@@ -53,19 +93,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
           Previous
         </button>
 
-        {pageNumbers.map((page) => (
-          <button
-            key={page}
-            onClick={() => onPageChange(page)}
-            className={`px-3 py-2 text-sm rounded-md font-medium ${
-              page === currentPage
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-white hover:bg-gray-600'
-            }`}
-          >
-            {page}
-          </button>
-        ))}
+        {getPageNumbers()}
 
         <button
           onClick={() => onPageChange(currentPage + 1)}
@@ -73,14 +101,6 @@ const ChapterList: React.FC<ChapterListProps> = ({
           className="px-3 py-2 text-sm bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
         >
           Next
-        </button>
-
-        <button
-          onClick={() => onPageChange(totalPages)}
-          disabled={currentPage === totalPages}
-          className="px-3 py-2 text-sm bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-        >
-          Last
         </button>
       </div>
     );
@@ -124,7 +144,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
         <h2 className="text-xl font-bold text-white mb-6">All Chapters</h2>
         
         <div className="space-y-2">
-          {chapters.map((chapter) => {
+          {chapters.slice(1).map((chapter) => {
             const { title, publishedTime } = parseChapterTitle(chapter.chapterTitle);
             const isRead = userProgress && chapter.chapterNumber <= userProgress;
             

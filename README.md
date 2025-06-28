@@ -1,185 +1,153 @@
-### Step 1: Set Up Your React Application
+# Audiobook Web Application
 
-1. **Create a New React App**:
-   You can use Create React App to set up your project quickly.
+A modern React TypeScript application for reading and listening to audiobooks with text-to-speech functionality.
 
-   ```bash
-   npx create-react-app audiobook-app
-   cd audiobook-app
-   ```
+## Features
 
-2. **Install Necessary Packages**:
-   Depending on your needs, you might want to install additional libraries, such as Axios for API calls, React Router for navigation, and any UI libraries like Material-UI or Bootstrap.
+- 📚 Upload and manage EPUB files
+- 🔊 Text-to-speech with dual voice support
+- 📖 Chapter-based navigation
+- 🎵 Audio player with playback controls
+- 🎨 Modern UI with Tailwind CSS
+- 🔐 Authentication system
 
-   ```bash
-   npm install axios react-router-dom
-   ```
-
-### Step 2: Structure Your Application
-
-Organize your project structure. A simple structure might look like this:
+## Project Structure
 
 ```
-/audiobook-app
+/audiobook-web
 |-- /src
 |   |-- /components
-|   |   |-- AudioList.js
-|   |   |-- AudioPlayer.js
-|   |   |-- AudioDetails.js
+|   |   |-- AudioPlayer.tsx
+|   |   |-- ChapterContent.tsx
+|   |   |-- ChapterList.tsx
+|   |   |-- EpubUpload.tsx
+|   |   |-- LoadingSpinner.tsx
+|   |   |-- Navigation.tsx
+|   |   |-- NovelCard.tsx
+|   |   |-- TTSDemo.tsx
 |   |-- /pages
-|   |   |-- Home.js
-|   |   |-- About.js
+|   |   |-- ChapterContentPage.tsx
+|   |   |-- ChaptersPage.tsx
+|   |   |-- LoginPage.tsx
+|   |   |-- NovelsPage.tsx
 |   |-- /services
-|   |   |-- api.js
-|   |-- App.js
-|   |-- index.js
+|   |   |-- api.ts
+|   |   |-- ttsService.ts
+|   |-- /hooks
+|   |   |-- useAuth.ts
+|   |-- /types
+|   |   |-- index.ts
+|   |-- /utils
+|   |   |-- audioPlayerUtils.ts
+|   |   |-- config.ts
+|   |-- /styles
+|   |   |-- components.css
+|   |   |-- globals.css
+|   |   |-- modern-components.css
+|   |-- App.tsx
+|   |-- index.tsx
 ```
 
-### Step 3: Create API Service
+## Installation
 
-In the `services/api.js` file, create functions to interact with the APIs provided by the `AudioBookPython` file.
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd audiobook-web
+   ```
 
-```javascript
-import axios from 'axios';
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-const API_URL = 'http://localhost:5000/api'; // Adjust based on your backend
+## Technologies Used
 
-export const fetchAudioBooks = async () => {
-    const response = await axios.get(`${API_URL}/audiobooks`);
-    return response.data;
-};
+- **React 18** with TypeScript
+- **React Router Dom 6** for navigation
+- **Material-UI** for UI components
+- **Tailwind CSS** for styling
+- **Axios** for API calls
+- **Heroicons** for icons
 
-export const fetchAudioBookDetails = async (id) => {
-    const response = await axios.get(`${API_URL}/audiobooks/${id}`);
-    return response.data;
-};
+## Development
 
-// Add more API functions as needed
-```
+### Running the Application
 
-### Step 4: Implement Components
-
-1. **AudioList Component**: Fetch and display a list of audiobooks.
-
-```javascript
-// src/components/AudioList.js
-import React, { useEffect, useState } from 'react';
-import { fetchAudioBooks } from '../services/api';
-
-const AudioList = () => {
-    const [audioBooks, setAudioBooks] = useState([]);
-
-    useEffect(() => {
-        const getAudioBooks = async () => {
-            const data = await fetchAudioBooks();
-            setAudioBooks(data);
-        };
-        getAudioBooks();
-    }, []);
-
-    return (
-        <div>
-            <h1>Audiobooks</h1>
-            <ul>
-                {audioBooks.map((book) => (
-                    <li key={book.id}>{book.title}</li>
-                ))}
-            </ul>
-        </div>
-    );
-};
-
-export default AudioList;
-```
-
-2. **AudioPlayer Component**: Implement audio playback functionality.
-
-```javascript
-// src/components/AudioPlayer.js
-import React from 'react';
-
-const AudioPlayer = ({ audioSrc }) => {
-    return (
-        <audio controls>
-            <source src={audioSrc} type="audio/mpeg" />
-            Your browser does not support the audio tag.
-        </audio>
-    );
-};
-
-export default AudioPlayer;
-```
-
-3. **AudioDetails Component**: Display details of a selected audiobook.
-
-```javascript
-// src/components/AudioDetails.js
-import React, { useEffect, useState } from 'react';
-import { fetchAudioBookDetails } from '../services/api';
-
-const AudioDetails = ({ match }) => {
-    const [audioBook, setAudioBook] = useState(null);
-    const { id } = match.params;
-
-    useEffect(() => {
-        const getAudioBookDetails = async () => {
-            const data = await fetchAudioBookDetails(id);
-            setAudioBook(data);
-        };
-        getAudioBookDetails();
-    }, [id]);
-
-    if (!audioBook) return <div>Loading...</div>;
-
-    return (
-        <div>
-            <h2>{audioBook.title}</h2>
-            <p>{audioBook.description}</p>
-            <AudioPlayer audioSrc={audioBook.audioUrl} />
-        </div>
-    );
-};
-
-export default AudioDetails;
-```
-
-### Step 5: Set Up Routing
-
-In `App.js`, set up routing to navigate between different components.
-
-```javascript
-// src/App.js
-import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import AudioList from './components/AudioList';
-import AudioDetails from './components/AudioDetails';
-
-const App = () => {
-    return (
-        <Router>
-            <Switch>
-                <Route path="/" exact component={AudioList} />
-                <Route path="/audiobooks/:id" component={AudioDetails} />
-            </Switch>
-        </Router>
-    );
-};
-
-export default App;
-```
-
-### Step 6: Run Your Application
-
-Make sure your backend API is running, then start your React application.
+Start the development server:
 
 ```bash
 npm start
 ```
 
-### Step 7: Test and Debug
+The application will run on `http://localhost:5000`.
 
-Test the application to ensure all features work as expected. Debug any issues that arise.
+### Building for Production
 
-### Conclusion
+Create a production build:
 
-This is a basic outline to get you started on creating a React application that utilizes APIs from a Python backend. Depending on the features in the `AudioBookNative` file, you may need to implement additional components and functionalities. Make sure to handle error states and loading states for a better user experience.
+```bash
+npm run build
+```
+
+### Running Tests
+
+Execute the test suite:
+
+```bash
+npm test
+```
+
+## Key Components
+
+### AudioPlayer
+Advanced audio player component with:
+- Play/pause controls
+- Progress tracking
+- Chapter navigation
+- Volume control
+
+### EpubUpload
+File upload component for EPUB files with:
+- Drag and drop support
+- File validation
+- Upload progress
+
+### ChapterContent
+Displays chapter text with:
+- Text-to-speech integration
+- Reading progress tracking
+- Responsive design
+
+### TTSDemo
+Text-to-speech demonstration with:
+- Dual voice support
+- Customizable speech settings
+- Real-time audio generation
+
+## API Services
+
+### api.ts
+Core API service for:
+- Novel management
+- Chapter operations
+- User authentication
+- File uploads
+
+### ttsService.ts
+Text-to-speech service handling:
+- Audio generation
+- Voice selection
+- Speech synthesis
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if needed
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.

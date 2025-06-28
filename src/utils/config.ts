@@ -145,6 +145,16 @@ export const getRecommendedVoicePairs = () => [
   { narrator: 'en-US-RogerNeural', dialogue: 'en-US-SaraNeural', description: 'Mature Male + Pleasant Female' }
 ];
 
+// Helper function to extract chapter title from novelName - chapterTitle format
+const extractChapterTitleFromNovelFormat = (text: string): string => {
+  // Handle "novelName - chapterTitle" format
+  const dashSeparatorMatch = text.match(/^.+?\s*-\s*(.+)$/);
+  if (dashSeparatorMatch) {
+    return dashSeparatorMatch[1].trim();
+  }
+  return text;
+};
+
 // Helper function to parse chapter titles
 export const parseChapterTitle = (title: string) => {
   console.log('Parsing chapter title:', JSON.stringify(title));
@@ -158,8 +168,11 @@ export const parseChapterTitle = (title: string) => {
     const publishedTime = lines.length > 2 ? lines[2] : '';
     
     // Extract title from chapter line (remove "Chapter X" prefix if present)
-    const chapterTitleMatch = chapterLine.match(/^(?:Chapter\s+\d+\s+)?(.+)$/i);
-    const chapterTitle = chapterTitleMatch ? chapterTitleMatch[1].trim() : chapterLine;
+    let chapterTitleMatch = chapterLine.match(/^(?:Chapter\s+\d+\s+)?(.+)$/i);
+    let chapterTitle = chapterTitleMatch ? chapterTitleMatch[1].trim() : chapterLine;
+    
+    // Handle novelName - chapterTitle format
+    chapterTitle = extractChapterTitleFromNovelFormat(chapterTitle);
     
     if (!isNaN(chapterNumber)) {
       return {
@@ -175,17 +188,24 @@ export const parseChapterTitle = (title: string) => {
   
   if (match) {
     const [, chapterNumber, chapterTitle, publishedTime] = match;
+    let cleanTitle = chapterTitle?.trim() || `Chapter ${chapterNumber}`;
+    
+    // Handle novelName - chapterTitle format
+    cleanTitle = extractChapterTitleFromNovelFormat(cleanTitle);
+    
     return {
       chapterNumber: parseInt(chapterNumber, 10),
-      title: chapterTitle?.trim() || `Chapter ${chapterNumber}`,
+      title: cleanTitle,
       publishedTime: publishedTime?.trim() || '',
     };
   }
   
-  // Fallback parsing
+  // Fallback parsing - handle novelName - chapterTitle format
+  let cleanTitle = extractChapterTitleFromNovelFormat(title);
+  
   return {
     chapterNumber: 0,
-    title: title,
+    title: cleanTitle,
     publishedTime: '',
   };
 };

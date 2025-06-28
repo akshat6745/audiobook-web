@@ -1,5 +1,6 @@
 import React from 'react';
 import { Paragraph } from '../types';
+import { parseChapterTitle } from '../utils/config';
 import LoadingSpinner from './LoadingSpinner';
 
 interface ChapterContentProps {
@@ -65,19 +66,19 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
       {chapterTitle && (
         <div className="text-center mb-12 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <h1 className="text-4xl font-bold text-gradient mb-4 leading-tight">
-            {chapterTitle}
+            {parseChapterTitle(chapterTitle).title}
           </h1>
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {paragraphs.map((paragraph, index) => (
           <div
             key={index}
             className={`
-              paragraph-item glass-dark p-6 rounded-xl cursor-pointer transition-all duration-300 border relative overflow-hidden animate-fade-in-up
+              paragraph-item glass-dark p-4 rounded-xl cursor-pointer transition-all duration-300 border relative overflow-hidden animate-fade-in-up
               ${activeParagraphIndex === index
-                ? 'border-primary-500/50 bg-primary-500/10 shadow-glow scale-[1.02]'
+                ? 'border-primary-500/50 bg-primary-500/10 shadow-glow scale-[1.01]'
                 : 'border-slate-700/50 hover:border-primary-500/30 hover:bg-primary-500/5'
               }
             `}
@@ -112,7 +113,7 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
             </p>
             
             {/* Paragraph metadata */}
-            <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-700/30">
+            <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-700/30">
               <span className="text-xs text-slate-400 font-medium">
                 Paragraph {index + 1}
               </span>
@@ -128,7 +129,7 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
       </div>
       
       {/* Chapter Footer */}
-      <div className="mt-12 text-center glass-dark p-6 rounded-xl border border-slate-700/50 animate-fade-in-up" style={{ animationDelay: `${paragraphs.length * 0.1 + 0.5}s` }}>
+      <div className="mt-8 text-center glass-dark p-4 rounded-xl border border-slate-700/50 animate-fade-in-up" style={{ animationDelay: `${paragraphs.length * 0.1 + 0.5}s` }}>
         <div className="flex items-center justify-center space-x-4 text-sm text-slate-400">
           <div className="flex items-center space-x-2">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">

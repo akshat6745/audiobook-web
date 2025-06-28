@@ -122,7 +122,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
   };
 
   return (
-    <div className="pt-24 px-4 max-w-6xl mx-auto">
+    <div className="px-4 max-w-6xl mx-auto">
       {/* Latest Chapter */}
       {chapters.length > 0 && (
         <div className="mb-12 animate-fade-in-up">

@@ -210,6 +210,15 @@ export const parseChapterTitle = (title: string) => {
   };
 };
 
+export const parseNovelName = (novelName: string): string => {
+  // Handle novelName - 'shadow-slave' -> 'Shadow Slave'
+  if (!novelName) return '';
+  return novelName
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 // Helper function to format chapter display
 export const formatChapterTitle = (chapterNumber: number, title?: string): string => {
   if (title && title !== `Chapter ${chapterNumber}`) {

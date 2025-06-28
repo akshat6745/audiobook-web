@@ -5,7 +5,7 @@ import AudioPlayer from '../components/AudioPlayer';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { fetchChapterContent, saveUserProgress } from '../services/api';
 import { ChapterContent as ChapterContentType, Paragraph } from '../types';
-import { getCurrentUsername } from '../utils/config';
+import { getCurrentUsername, parseChapterTitle, parseNovelName } from '../utils/config';
 
 const ChapterContentPage: React.FC = () => {
   const { novelName, chapterNumber } = useParams<{
@@ -169,10 +169,11 @@ const ChapterContentPage: React.FC = () => {
                 </button>
                 <div className="min-w-0 flex-1">
                   <h1 className="text-xl font-bold text-white truncate">
-                    {chapterContent?.chapterTitle || `Chapter ${currentChapterNumber}`}
+                    {/* {chapterContent?.chapterTitle || `Chapter ${currentChapterNumber}`} */}
+                    {parseChapterTitle(chapterContent?.chapterTitle || `Chapter ${currentChapterNumber}`).title}
                   </h1>
                   <p className="text-sm text-slate-400 truncate">
-                    {novelName} • {paragraphs.length} paragraphs
+                    {parseNovelName(novelName ?? '')} • {paragraphs.length} paragraphs
                   </p>
                 </div>
               </div>

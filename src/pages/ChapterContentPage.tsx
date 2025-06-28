@@ -23,6 +23,7 @@ const ChapterContentPage: React.FC = () => {
 
   const currentChapterNumber = parseInt(chapterNumber || '1', 10);
   const username = getCurrentUsername();
+  const [chapterInputValue, setChapterInputValue] = useState(currentChapterNumber.toString());
 
   const loadChapterContent = useCallback(async () => {
     if (!novelName || !chapterNumber) return;
@@ -66,6 +67,11 @@ const ChapterContentPage: React.FC = () => {
     }
   }, [username, novelName, currentChapterNumber, chapterContent]);
 
+  // Update chapter input value when chapter changes
+  useEffect(() => {
+    setChapterInputValue(currentChapterNumber.toString());
+  }, [currentChapterNumber]);
+
   const handleParagraphClick = (index: number) => {
     setActiveParagraphIndex(index);
     setIsAudioPlayerVisible(true);
@@ -92,6 +98,23 @@ const ChapterContentPage: React.FC = () => {
 
   const handleBackToChapters = () => {
     navigate(`/novels/${encodeURIComponent(novelName!)}/chapters`);
+  };
+
+  const handleChapterNavigation = () => {
+    const targetChapter = parseInt(chapterInputValue, 10);
+    if (!isNaN(targetChapter) && targetChapter > 0) {
+      navigate(`/novels/${encodeURIComponent(novelName!)}/chapters/${targetChapter}`);
+    }
+  };
+
+  const handleChapterInputChange = (value: string) => {
+    setChapterInputValue(value);
+  };
+
+  const handleChapterInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleChapterNavigation();
+    }
   };
 
   if (loading) {
@@ -193,10 +216,27 @@ const ChapterContentPage: React.FC = () => {
                   </span>
                 </button>
                 
-                <div className="px-4 py-2 glass rounded-lg border border-primary-500/30">
-                  <span className="text-sm font-medium text-primary-300">
-                    Ch. {currentChapterNumber}
+                <div className="flex items-center gap-2 px-3 py-2 glass rounded-lg border border-primary-500/30">
+                  <span className="text-sm font-medium text-primary-300 whitespace-nowrap">
+                    Ch.
                   </span>
+                  <input
+                    type="number"
+                    value={chapterInputValue}
+                    onChange={(e) => handleChapterInputChange(e.target.value)}
+                    onKeyPress={handleChapterInputKeyPress}
+                    className="w-16 bg-transparent text-sm font-medium text-primary-300 border-none outline-none focus:text-white text-center"
+                    min="1"
+                  />
+                  <button
+                    onClick={handleChapterNavigation}
+                    className="ml-1 p-1 hover:bg-primary-500/20 rounded text-primary-400 hover:text-white transition-colors duration-200"
+                    title="Go to chapter"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </button>
                 </div>
                 
                 <button

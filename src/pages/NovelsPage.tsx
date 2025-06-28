@@ -295,12 +295,12 @@ const NovelsPage: React.FC = () => {
                   lastReadChapter={getLastReadChapter(novel.title)}
                   onRead={(novelName) =>
                     navigate(
-                      `/novels/${encodeURIComponent(novelName)}/chapters`,
+                      `/novels/${encodeURIComponent(novelName)}/chapters`
                     )
                   }
                   onResume={(novelName, chapter) =>
                     navigate(
-                      `/novels/${encodeURIComponent(novelName)}/chapters?lastChapter=${chapter}`,
+                      `/novels/${encodeURIComponent(novelName)}/chapters/${chapter}`
                     )
                   }
                 />

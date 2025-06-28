@@ -1,6 +1,6 @@
-import React from 'react';
-import { Chapter } from '../types';
-import { parseChapterTitle } from '../utils/config';
+import React from "react";
+import { Chapter } from "../types";
+import { parseChapterTitle } from "../utils/config";
 
 interface ChapterListProps {
   chapters: Chapter[];
@@ -28,8 +28,8 @@ const ChapterList: React.FC<ChapterListProps> = ({
         onClick={() => onPageChange(page)}
         className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-300 ${
           isActive
-            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-glow scale-105'
-            : 'glass-dark text-slate-300 hover:text-white hover:bg-primary-500/20 hover:scale-105'
+            ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-glow scale-105"
+            : "glass-dark text-slate-300 hover:text-white hover:bg-primary-500/20 hover:scale-105"
         }`}
       >
         {page}
@@ -39,19 +39,19 @@ const ChapterList: React.FC<ChapterListProps> = ({
     const renderEllipsis = (key: string) => (
       <span key={key} className="px-3 py-2 text-sm text-slate-400">
         <svg className="w-2 h-2 fill-current" viewBox="0 0 8 8">
-          <circle cx="1" cy="4" r="1"/>
-          <circle cx="4" cy="4" r="1"/>
-          <circle cx="7" cy="4" r="1"/>
+          <circle cx="1" cy="4" r="1" />
+          <circle cx="4" cy="4" r="1" />
+          <circle cx="7" cy="4" r="1" />
         </svg>
       </span>
     );
 
     const getPageNumbers = () => {
       const pages = [];
-      
+
       // Always show first page
       pages.push(renderPageButton(1, currentPage === 1));
-      
+
       if (totalPages <= 7) {
         // If we have 7 or fewer pages, show all pages
         for (let i = 2; i <= totalPages; i++) {
@@ -64,25 +64,25 @@ const ChapterList: React.FC<ChapterListProps> = ({
           for (let i = 2; i <= 5; i++) {
             pages.push(renderPageButton(i, currentPage === i));
           }
-          pages.push(renderEllipsis('end-ellipsis'));
+          pages.push(renderEllipsis("end-ellipsis"));
           pages.push(renderPageButton(totalPages, currentPage === totalPages));
         } else if (currentPage >= totalPages - 3) {
           // Near the end
-          pages.push(renderEllipsis('start-ellipsis'));
+          pages.push(renderEllipsis("start-ellipsis"));
           for (let i = totalPages - 4; i <= totalPages; i++) {
             pages.push(renderPageButton(i, currentPage === i));
           }
         } else {
           // In the middle
-          pages.push(renderEllipsis('start-ellipsis'));
+          pages.push(renderEllipsis("start-ellipsis"));
           for (let i = currentPage - 1; i <= currentPage + 1; i++) {
             pages.push(renderPageButton(i, currentPage === i));
           }
-          pages.push(renderEllipsis('end-ellipsis'));
+          pages.push(renderEllipsis("end-ellipsis"));
           pages.push(renderPageButton(totalPages, currentPage === totalPages));
         }
       }
-      
+
       return pages;
     };
 
@@ -94,16 +94,24 @@ const ChapterList: React.FC<ChapterListProps> = ({
           className="btn-modern px-4 py-2 text-sm glass-dark text-slate-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:text-white hover:bg-primary-500/20 transition-all duration-300 focus-ring"
         >
           <span className="flex items-center space-x-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             <span>Previous</span>
           </span>
         </button>
 
-        <div className="flex items-center space-x-2">
-          {getPageNumbers()}
-        </div>
+        <div className="flex items-center space-x-2">{getPageNumbers()}</div>
 
         <button
           onClick={() => onPageChange(currentPage + 1)}
@@ -112,8 +120,18 @@ const ChapterList: React.FC<ChapterListProps> = ({
         >
           <span className="flex items-center space-x-2">
             <span>Next</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </span>
         </button>
@@ -131,7 +149,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
             <h2 className="text-3xl font-bold text-gradient">Latest Chapter</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-primary-500/50 to-transparent" />
           </div>
-          
+
           <div className="glass-dark rounded-2xl p-8 border border-primary-500/20 card-hover shadow-glow-lg animate-glow">
             <div className="flex items-center justify-between">
               <div className="flex-1">
@@ -143,15 +161,21 @@ const ChapterList: React.FC<ChapterListProps> = ({
                     </span>
                   </div>
                   <div className="h-6 w-px bg-gradient-to-b from-primary-400 to-accent-500" />
-                  <span className="text-primary-300 font-semibold tracking-wide">Latest Release</span>
+                  <span className="text-primary-300 font-semibold tracking-wide">
+                    Latest Release
+                  </span>
                 </div>
                 <h3 className="text-white font-bold text-2xl mb-2 leading-tight">
                   {parseChapterTitle(chapters[0].chapterTitle).title}
                 </h3>
                 <div className="flex items-center space-x-4 text-slate-400">
                   <span className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    <svg
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
                     <span>Chapter {chapters[0].chapterNumber}</span>
                   </span>
@@ -162,8 +186,18 @@ const ChapterList: React.FC<ChapterListProps> = ({
                 className="btn-modern bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-8 py-4 rounded-xl font-semibold shadow-glow hover:shadow-glow-lg transition-all duration-300 focus-ring animate-float"
               >
                 <span className="flex items-center space-x-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                   <span>Read Now</span>
                 </span>
@@ -174,21 +208,27 @@ const ChapterList: React.FC<ChapterListProps> = ({
       )}
 
       {/* All Chapters */}
-      <div className="glass-dark rounded-2xl p-8 border border-slate-700/50 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+      <div
+        className="glass-dark rounded-2xl p-8 border border-slate-700/50 animate-fade-in-up"
+        style={{ animationDelay: "0.2s" }}
+      >
         <div className="flex items-center space-x-3 mb-8">
           <div className="h-8 w-1 bg-gradient-to-b from-slate-400 to-slate-600 rounded-full" />
           <h2 className="text-2xl font-bold text-white">All Chapters</h2>
           <div className="flex-1 h-px bg-gradient-to-r from-slate-600/50 to-transparent" />
           <span className="text-slate-400 text-sm font-medium">
-            {chapters.length} chapter{chapters.length !== 1 ? 's' : ''}
+            {chapters.length} chapter{chapters.length !== 1 ? "s" : ""}
           </span>
         </div>
-        
+
         <div className="space-y-3">
           {chapters.slice(1).map((chapter, index) => {
-            const { title, publishedTime } = parseChapterTitle(chapter.chapterTitle);
-            const isRead = userProgress && chapter.chapterNumber <= userProgress;
-            
+            const { title, publishedTime } = parseChapterTitle(
+              chapter.chapterTitle,
+            );
+            const isRead =
+              userProgress && chapter.chapterNumber <= userProgress;
+
             return (
               <div
                 key={`${chapter.chapterNumber}-${chapter.chapterTitle}`}
@@ -198,51 +238,66 @@ const ChapterList: React.FC<ChapterListProps> = ({
               >
                 {/* Background gradient on hover */}
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-500/5 to-accent-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
+
                 <div className="relative flex items-center justify-between">
                   <div className="flex items-center space-x-4 flex-1">
-                    <div className={`relative w-12 h-12 flex items-center justify-center rounded-xl font-bold transition-all duration-300 ${
-                      isRead 
-                        ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-glow' 
-                        : 'glass-dark text-slate-300 group-hover:text-primary-300'
-                    }`}>
+                    <div
+                      className={`relative w-12 h-12 flex items-center justify-center rounded-xl font-bold transition-all duration-300 ${
+                        isRead
+                          ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-glow"
+                          : "glass-dark text-slate-300 group-hover:text-primary-300"
+                      }`}
+                    >
                       {isRead && (
                         <div className="absolute inset-0 bg-emerald-400/20 rounded-xl blur-md animate-pulse-glow" />
                       )}
                       <span className="relative">{chapter.chapterNumber}</span>
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <h3 className="text-white font-semibold text-lg group-hover:text-primary-300 transition-colors duration-300 truncate">
                         {title}
                       </h3>
                       {publishedTime && (
                         <p className="text-slate-400 text-sm mt-1 flex items-center space-x-2">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          <svg
+                            className="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                           </svg>
                           <span>{publishedTime}</span>
                         </p>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-4">
                     {isRead && (
                       <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm font-medium">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                         </svg>
                         <span>Completed</span>
                       </div>
                     )}
-                    <svg 
-                      className="w-6 h-6 text-slate-400 group-hover:text-primary-400 transition-all duration-300 group-hover:scale-110" 
-                      fill="none" 
-                      stroke="currentColor" 
+                    <svg
+                      className="w-6 h-6 text-slate-400 group-hover:text-primary-400 transition-all duration-300 group-hover:scale-110"
+                      fill="none"
+                      stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
                     </svg>
                   </div>
                 </div>

@@ -3,7 +3,7 @@ export interface Novel {
   title: string;
   author: string | null;
   chapterCount: number | null;
-  source: 'google_doc' | 'epub_upload';
+  source: "google_doc" | "epub_upload";
 }
 
 export interface BaseChapter {

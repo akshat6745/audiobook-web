@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { uploadEpub } from '../services/api';
-import LoadingSpinner from './LoadingSpinner';
+import React, { useState } from "react";
+import { uploadEpub } from "../services/api";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface EpubUploadProps {
   onClose: () => void;
@@ -15,11 +15,11 @@ const EpubUpload: React.FC<EpubUploadProps> = ({ onClose, onSuccess }) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      if (selectedFile.name.toLowerCase().endsWith('.epub')) {
+      if (selectedFile.name.toLowerCase().endsWith(".epub")) {
         setFile(selectedFile);
         setError(null);
       } else {
-        setError('Please select an EPUB file');
+        setError("Please select an EPUB file");
         setFile(null);
       }
     }
@@ -27,7 +27,7 @@ const EpubUpload: React.FC<EpubUploadProps> = ({ onClose, onSuccess }) => {
 
   const handleUpload = async () => {
     if (!file) {
-      setError('Please select a file');
+      setError("Please select a file");
       return;
     }
 
@@ -38,7 +38,7 @@ const EpubUpload: React.FC<EpubUploadProps> = ({ onClose, onSuccess }) => {
       const result = await uploadEpub(file);
       onSuccess(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,8 @@ const EpubUpload: React.FC<EpubUploadProps> = ({ onClose, onSuccess }) => {
 
           {file && (
             <div className="text-sm text-gray-400">
-              Selected: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+              Selected: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)}{" "}
+              MB)
             </div>
           )}
 
@@ -96,11 +97,7 @@ const EpubUpload: React.FC<EpubUploadProps> = ({ onClose, onSuccess }) => {
               disabled={!file || loading}
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
             >
-              {loading ? (
-                <LoadingSpinner size="sm" />
-              ) : (
-                'Upload'
-              )}
+              {loading ? <LoadingSpinner size="sm" /> : "Upload"}
             </button>
           </div>
         </div>

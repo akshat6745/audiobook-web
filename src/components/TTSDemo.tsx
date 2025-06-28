@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import TTSService from '../services/ttsService';
-import { NARRATOR_VOICES, DIALOGUE_VOICES } from '../utils/config';
+import React, { useState } from "react";
+import TTSService from "../services/ttsService";
+import { NARRATOR_VOICES, DIALOGUE_VOICES } from "../utils/config";
 
 const TTSDemo: React.FC = () => {
   const [text, setText] = useState(
-    'The wizard raised his staff and stepped forward. "You shall not pass!" he declared with authority. The ground trembled beneath his feet as magical energy coursed through the ancient weapon.'
+    'The wizard raised his staff and stepped forward. "You shall not pass!" he declared with authority. The ground trembled beneath his feet as magical energy coursed through the ancient weapon.',
   );
-  const [narratorVoice, setNarratorVoice] = useState('en-US-ChristopherNeural');
-  const [dialogueVoice, setDialogueVoice] = useState('en-US-AriaNeural');
+  const [narratorVoice, setNarratorVoice] = useState("en-US-ChristopherNeural");
+  const [dialogueVoice, setDialogueVoice] = useState("en-US-AriaNeural");
   const [isLoading, setIsLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +15,7 @@ const TTSDemo: React.FC = () => {
   const generateAudio = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     // Clean up previous audio
     if (audioUrl) {
       TTSService.cleanupAudioUrl(audioUrl);
@@ -23,21 +23,29 @@ const TTSDemo: React.FC = () => {
     }
 
     try {
-      const result = await TTSService.generateDualVoiceTTS(text, narratorVoice, dialogueVoice);
-      
+      const result = await TTSService.generateDualVoiceTTS(
+        text,
+        narratorVoice,
+        dialogueVoice,
+      );
+
       if (result.success && result.audioUrl) {
         setAudioUrl(result.audioUrl);
       } else {
-        setError(result.error || 'Failed to generate audio');
+        setError(result.error || "Failed to generate audio");
       }
     } catch (err) {
-      setError('An error occurred while generating audio');
+      setError("An error occurred while generating audio");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const selectSamplePair = (narrator: string, dialogue: string, sampleText: string) => {
+  const selectSamplePair = (
+    narrator: string,
+    dialogue: string,
+    sampleText: string,
+  ) => {
     setNarratorVoice(narrator);
     setDialogueVoice(dialogue);
     setText(sampleText);
@@ -50,7 +58,7 @@ const TTSDemo: React.FC = () => {
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
         🎙️ TTS Dual-Voice Demo
       </h2>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Text Input */}
         <div className="space-y-4">
@@ -75,7 +83,9 @@ const TTSDemo: React.FC = () => {
               {recommendedPairs.map((pair, index) => (
                 <button
                   key={index}
-                  onClick={() => selectSamplePair(pair.narrator, pair.dialogue, pair.sample)}
+                  onClick={() =>
+                    selectSamplePair(pair.narrator, pair.dialogue, pair.sample)
+                  }
                   className="p-3 text-left border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   <div className="font-medium text-sm text-gray-900 dark:text-white">
@@ -155,7 +165,7 @@ const TTSDemo: React.FC = () => {
                 Generating Audio...
               </div>
             ) : (
-              '🎙️ Generate Dual-Voice Audio'
+              "🎙️ Generate Dual-Voice Audio"
             )}
           </button>
 
@@ -185,9 +195,17 @@ const TTSDemo: React.FC = () => {
           📋 API Information
         </h3>
         <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-          <p><strong>Endpoint:</strong> POST /tts-dual-voice</p>
-          <p><strong>Features:</strong> Automatic dialogue detection, dual voice processing</p>
-          <p><strong>Current Selection:</strong> {narratorVoice} (narrator) + {dialogueVoice} (dialogue)</p>
+          <p>
+            <strong>Endpoint:</strong> POST /tts-dual-voice
+          </p>
+          <p>
+            <strong>Features:</strong> Automatic dialogue detection, dual voice
+            processing
+          </p>
+          <p>
+            <strong>Current Selection:</strong> {narratorVoice} (narrator) +{" "}
+            {dialogueVoice} (dialogue)
+          </p>
         </div>
       </div>
     </div>

@@ -1,35 +1,41 @@
-import { Paragraph, EnhancedParagraph } from '../types';
-import TTSService from '../services/ttsService';
+import { Paragraph, EnhancedParagraph } from "../types";
+import TTSService from "../services/ttsService";
 
 export const MIN_CHARACTERS = 1500;
 
-export const initializeEnhancedParagraphs = (paragraphs: Paragraph[]): EnhancedParagraph[] => {
+export const initializeEnhancedParagraphs = (
+  paragraphs: Paragraph[],
+): EnhancedParagraph[] => {
   return paragraphs.map((paragraph, index) => ({
     paragraphNumber: index + 1,
     text: paragraph.text,
     isLoading: false,
     audioData: null,
     audioBlob: null,
-    errors: null
+    errors: null,
   }));
 };
 
 export const cleanupAudioUrls = (paragraphs: EnhancedParagraph[]): void => {
-  paragraphs.forEach(paragraph => {
+  paragraphs.forEach((paragraph) => {
     if (paragraph.audioData) {
       TTSService.cleanupAudioUrl(paragraph.audioData);
     }
   });
 };
 
-export const clearAudioDataForVoiceChange = (paragraphs: EnhancedParagraph[]): EnhancedParagraph[] => {
-  return paragraphs.map(p => ({
+export const clearAudioDataForVoiceChange = (
+  paragraphs: EnhancedParagraph[],
+): EnhancedParagraph[] => {
+  return paragraphs.map((p) => ({
     ...p,
-    audioData: p.audioData ? (() => { 
-      TTSService.cleanupAudioUrl(p.audioData!); 
-      return null; 
-    })() : null,
-    audioBlob: null
+    audioData: p.audioData
+      ? (() => {
+          TTSService.cleanupAudioUrl(p.audioData!);
+          return null;
+        })()
+      : null,
+    audioBlob: null,
   }));
 };
 
@@ -43,38 +49,46 @@ export const calculateNextSpeed = (currentSpeed: number): number => {
 export const generateAudioForParagraph = async (
   paragraph: EnhancedParagraph,
   narratorVoice: string,
-  dialogueVoice: string
-): Promise<{ success: boolean; audioUrl?: string; audioBlob?: Blob; error?: string }> => {
+  dialogueVoice: string,
+): Promise<{
+  success: boolean;
+  audioUrl?: string;
+  audioBlob?: Blob;
+  error?: string;
+}> => {
   try {
     // Clean up previous audio URL for this paragraph
     if (paragraph.audioData) {
       TTSService.cleanupAudioUrl(paragraph.audioData);
     }
-    
+
     // Use dual-voice TTS for better audiobook experience
     const result = await TTSService.generateDualVoiceTTS(
-      paragraph.text, 
-      narratorVoice, 
-      dialogueVoice
+      paragraph.text,
+      narratorVoice,
+      dialogueVoice,
     );
 
-    console.log('result from TTS service:', result);
-    
+    console.log("result from TTS service:", result);
+
     if (result.success && result.audioUrl && result.audioBlob) {
-      console.log('Audio generated successfully, blob URL:', result.audioUrl);
+      console.log("Audio generated successfully, blob URL:", result.audioUrl);
     }
-    
+
     return result;
   } catch (err) {
-    console.error('TTS Error:', err);
-    return { success: false, error: 'Failed to generate audio. Please try again.' };
+    console.error("TTS Error:", err);
+    return {
+      success: false,
+      error: "Failed to generate audio. Please try again.",
+    };
   }
 };
 
 export const updateParagraphInList = (
   paragraphs: EnhancedParagraph[],
   index: number,
-  updates: Partial<EnhancedParagraph>
+  updates: Partial<EnhancedParagraph>,
 ): EnhancedParagraph[] => {
-  return paragraphs.map((p, i) => i === index ? { ...p, ...updates } : p);
+  return paragraphs.map((p, i) => (i === index ? { ...p, ...updates } : p));
 };

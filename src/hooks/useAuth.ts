@@ -1,5 +1,9 @@
-import { useState, useEffect } from 'react';
-import { getCurrentUsername, setCurrentUsername, clearUserSession } from '../utils/config';
+import { useState, useEffect } from "react";
+import {
+  getCurrentUsername,
+  setCurrentUsername,
+  clearUserSession,
+} from "../utils/config";
 
 interface UseAuthReturn {
   username: string | null;

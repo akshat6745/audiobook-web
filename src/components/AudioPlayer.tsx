@@ -369,7 +369,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         defaultPosition={{ x: 20, y: 100 }}
         nodeRef={nodeRef}
       >
-        <div ref={nodeRef} className="absolute glass-dark border border-slate-700/50 rounded-lg shadow-lg z-50 pointer-events-auto transition-all duration-300 backdrop-blur-xl">
+        <div ref={nodeRef} className="absolute glass-dark border border-slate-700/50 rounded-lg shadow-lg z-50 pointer-events-auto transition-all duration-300 backdrop-blur-xl w-80">
         
         {/* Compact Header with Controls */}
         <div className="drag-handle cursor-move p-3 rounded-t-lg bg-gradient-to-r from-primary-500/10 to-accent-500/10">
@@ -472,12 +472,14 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         {isExpanded && (
           <div className="p-3 border-t border-slate-700/30 bg-slate-900/50 rounded-b-lg">
             {/* Current Paragraph Preview */}
-            <div className="mb-3 p-2 glass rounded text-xs text-slate-300 max-h-16 overflow-hidden">
-              {currentParagraph?.text?.slice(0, 150) || 'No content available'}...
+            <div className="mb-3 p-2 glass rounded text-xs text-slate-300 max-h-16 overflow-y-auto leading-relaxed">
+              <div className="whitespace-pre-wrap">
+                {currentParagraph?.text || 'No content available'}
+              </div>
             </div>
 
-            {/* Voice Controls */}
-            <div className="space-y-2">
+            {/* Voice Controls - Single Row */}
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs text-primary-300 mb-1">Narrator</label>
                 <select

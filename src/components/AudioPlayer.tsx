@@ -39,6 +39,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [dialogueVoice, setDialogueVoice] = useState(DEFAULT_DIALOGUE_VOICE);
   const [playbackSpeed, setPlaybackSpeed] = useState(SPEED_OPTIONS[2].value);
   const [enhancedParagraphs, setEnhancedParagraphs] = useState<EnhancedParagraph[]>([]);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const nodeRef = useRef<HTMLDivElement | null>(null);
@@ -143,6 +145,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         setIsPlaying(false);
       }
       
+      // Reset progress tracking
+      setCurrentTime(0);
+      setDuration(0);
+      
       // Load current paragraph audio immediately
       lazyLoadAudio(currentParagraphIndex);
       
@@ -162,6 +168,34 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       audioRef.current.playbackRate = playbackSpeed;
     }
   }, [playbackSpeed]);
+
+  // Add event listeners for progress tracking
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration);
+    };
+
+    const handleDurationChange = () => {
+      setDuration(audio.duration);
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('durationchange', handleDurationChange);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('durationchange', handleDurationChange);
+    };
+  }, []);
 
   // Auto-play when audio becomes available after loading
   useEffect(() => {
@@ -234,6 +268,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         audioRef.current.src = '';
       }
       setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
       onParagraphChange(currentParagraphIndex - 1);
     }
   };
@@ -249,6 +285,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         audioRef.current.src = '';
       }
       setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
       onParagraphChange(currentParagraphIndex + 1);
     }
   };
@@ -257,6 +295,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     setSelectedVoice(voice);
     audioRef.current?.pause();
     setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
     // Clean up current audio source
     if (audioRef.current?.src && audioRef.current.src.startsWith('blob:')) {
       URL.revokeObjectURL(audioRef.current.src);
@@ -271,6 +311,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     setDialogueVoice(voice);
     audioRef.current?.pause();
     setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
     // Clean up current audio source
     if (audioRef.current?.src && audioRef.current.src.startsWith('blob:')) {
       URL.revokeObjectURL(audioRef.current.src);
@@ -283,6 +325,25 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const handleSpeedClick = () => {
     setPlaybackSpeed(calculateNextSpeed(playbackSpeed));
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || !duration) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const newTime = percentage * duration;
+    
+    audioRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const formatTime = (time: number) => {
+    if (!time || !isFinite(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   if (!isVisible) return null;
@@ -298,101 +359,149 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         defaultPosition={{ x: 20, y: 100 }}
         nodeRef={nodeRef}
       >
-        <div ref={nodeRef} className="absolute bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-2xl z-50 min-w-[280px] max-w-[320px] pointer-events-auto transition-all duration-300 hover:shadow-3xl">
+        <div ref={nodeRef} className="absolute glass-dark border border-slate-700/50 rounded-2xl shadow-glow-lg z-50 min-w-[320px] max-w-[380px] pointer-events-auto transition-all duration-300 hover:shadow-glow-xl animate-fade-in-up backdrop-blur-xl">
         
-        {/* Drag Handle - Invisible but functional */}
-        <div className="drag-handle absolute top-0 left-0 right-0 h-3 cursor-move"></div>
+        {/* Drag Handle - Styled with gradient */}
+        <div className="drag-handle absolute top-0 left-0 right-0 h-4 cursor-move rounded-t-2xl bg-gradient-to-r from-primary-500/20 to-accent-500/20 flex items-center justify-center">
+          <div className="w-8 h-1 bg-gradient-to-r from-slate-400 to-slate-500 rounded-full opacity-50"></div>
+        </div>
 
         {/* Error Display */}
         {currentError && (
-          <div className="mx-3 mt-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg text-red-700 dark:text-red-300 text-xs flex items-center gap-1.5 animate-fadeIn">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-            {currentError}
+          <div className="mx-4 mt-6 p-3 glass border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center gap-2 animate-shake">
+            <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse-glow"></div>
+            <span className="flex-1">{currentError}</span>
           </div>
         )}
 
-        {/* Compact Current Paragraph Info */}
-        <div className="p-3 border-b border-gray-200/30 dark:border-gray-700/30">
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
-                {currentParagraphIndex + 1}/{enhancedParagraphs.length}
-              </span>
+        {/* Modern Header */}
+        <div className="p-4 border-b border-slate-700/30 mt-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-600 rounded-xl flex items-center justify-center shadow-glow">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold text-sm">Audio Player</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-medium text-primary-300 bg-primary-500/20 px-2 py-1 rounded-full border border-primary-500/30">
+                    {currentParagraphIndex + 1}/{enhancedParagraphs.length}
+                  </span>
+                  <span className="text-xs text-slate-400">Paragraph</span>
+                </div>
+              </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+              className="p-2 glass rounded-xl hover:bg-red-500/20 text-slate-400 hover:text-white transition-all duration-300 focus-ring group"
             >
-              <Close className="w-4 h-4" />
+              <Close className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
             </button>
           </div>
-          <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">
-            {currentParagraph?.text?.slice(0, 100) || 'No content'}...
-          </p>
+          
+          {/* Current Paragraph Preview */}
+          <div className="glass p-3 rounded-xl border border-slate-600/30">
+            <p className="text-sm text-slate-300 line-clamp-2 leading-relaxed">
+              {currentParagraph?.text?.slice(0, 120) || 'No content available'}...
+            </p>
+          </div>
         </div>
 
-        {/* Compact Controls */}
-        <div className="p-3">
-          <div className="flex items-center justify-center gap-2 mb-3">
+        {/* Progress Bar Section */}
+        {(currentTime > 0 || duration > 0) && (
+          <div className="px-4 py-3 border-b border-slate-700/30">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+              <div 
+                className="h-2 bg-slate-800 rounded-full cursor-pointer relative overflow-hidden group"
+                onClick={handleSeek}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-700 to-slate-600 rounded-full"></div>
+                <div 
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full transition-all duration-300 shadow-glow"
+                  style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                ></div>
+                <div 
+                  className="absolute top-1/2 w-4 h-4 bg-white rounded-full shadow-glow transform -translate-y-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modern Controls */}
+        <div className="p-4">
+          <div className="flex items-center justify-center gap-3 mb-4">
             <button
               onClick={handlePrevious}
               disabled={currentParagraphIndex === 0}
-              className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 disabled:hover:scale-100 shadow-sm hover:shadow-md"
+              className="p-3 glass rounded-xl text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary-500/20 hover:text-white transition-all duration-300 hover:scale-105 disabled:hover:scale-100 shadow-md hover:shadow-glow focus-ring btn-modern"
             >
-              <SkipPrevious className="w-4 h-4" />
+              <SkipPrevious className="w-5 h-5" />
             </button>
 
             <button
               onClick={isPlaying ? handlePause : handlePlay}
               disabled={isCurrentLoading}
-              className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg transform-gpu"
+              className="p-4 bg-gradient-to-br from-primary-500 to-accent-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-primary-600 hover:to-accent-700 transition-all duration-300 hover:scale-105 shadow-glow hover:shadow-glow-lg rounded-2xl btn-modern relative overflow-hidden"
             >
               {isCurrentLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
               ) : isPlaying ? (
-                <Pause className="w-4 h-4" />
+                <Pause className="w-6 h-6" />
               ) : (
-                <PlayArrow className="w-4 h-4" />
+                <PlayArrow className="w-6 h-6" />
               )}
+              <div className="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
             </button>
 
             <button
               onClick={handleNext}
               disabled={currentParagraphIndex === enhancedParagraphs.length - 1}
-              className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 disabled:hover:scale-100 shadow-sm hover:shadow-md"
+              className="p-3 glass rounded-xl text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary-500/20 hover:text-white transition-all duration-300 hover:scale-105 disabled:hover:scale-100 shadow-md hover:shadow-glow focus-ring btn-modern"
             >
-              <SkipNext className="w-4 h-4" />
+              <SkipNext className="w-5 h-5" />
             </button>
 
             <button
               onClick={handleSpeedClick}
-              className="px-3 py-2 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg transform-gpu text-xs font-semibold min-w-[3rem]"
+              className="px-4 py-3 bg-gradient-to-br from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 hover:scale-105 shadow-glow hover:shadow-glow-lg rounded-xl text-sm font-bold min-w-[3.5rem] btn-modern relative overflow-hidden"
             >
-              {playbackSpeed}×
+              <span className="relative z-10">{playbackSpeed}×</span>
+              <div className="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
             </button>
           </div>
 
-          {/* Voice Controls Grid */}
-          <div className="grid grid-cols-1 gap-2 text-xs">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                Narrator Voice (Male Recommended)
+          {/* Voice Controls - Modern Glass Cards */}
+          <div className="space-y-3">
+            <div className="glass p-3 rounded-xl border border-slate-600/30">
+              <label className="block text-xs font-semibold text-primary-300 uppercase tracking-wide mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                </svg>
+                Narrator Voice
               </label>
               <select
                 value={selectedVoice}
                 onChange={(e) => handleVoiceChange(e.target.value)}
-                className="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs focus:ring-1 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                className="w-full px-3 py-2 glass border border-slate-600/50 rounded-lg text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-glow focus-ring bg-transparent backdrop-blur-sm"
               >
                 <optgroup label="👨 Male Voices (Recommended for Narration)">
                   {NARRATOR_VOICES.map((voice: VoiceOption) => (
-                    <option key={voice.value} value={voice.value}>
+                    <option key={voice.value} value={voice.value} className="bg-slate-800 text-white">
                       {voice.label}
                     </option>
                   ))}
                 </optgroup>
                 <optgroup label="👩 Female Voices">
                   {DIALOGUE_VOICES.map((voice: VoiceOption) => (
-                    <option key={voice.value} value={voice.value}>
+                    <option key={voice.value} value={voice.value} className="bg-slate-800 text-white">
                       {voice.label}
                     </option>
                   ))}
@@ -400,25 +509,29 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
               </select>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                Dialogue Voice (Female Recommended)
+            <div className="glass p-3 rounded-xl border border-slate-600/30">
+              <label className="block text-xs font-semibold text-accent-300 uppercase tracking-wide mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 9h6v6h-6z"/>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM7 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1zm10 0c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1z"/>
+                </svg>
+                Dialogue Voice
               </label>
               <select
                 value={dialogueVoice}
                 onChange={(e) => handleDialogueVoiceChange(e.target.value)}
-                className="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs focus:ring-1 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                className="w-full px-3 py-2 glass border border-slate-600/50 rounded-lg text-white text-sm focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-glow focus-ring bg-transparent backdrop-blur-sm"
               >
                 <optgroup label="👩 Female Voices (Recommended for Dialogue)">
                   {DIALOGUE_VOICES.map((voice: VoiceOption) => (
-                    <option key={voice.value} value={voice.value}>
+                    <option key={voice.value} value={voice.value} className="bg-slate-800 text-white">
                       {voice.label}
                     </option>
                   ))}
                 </optgroup>
                 <optgroup label="👨 Male Voices">
                   {NARRATOR_VOICES.map((voice: VoiceOption) => (
-                    <option key={voice.value} value={voice.value}>
+                    <option key={voice.value} value={voice.value} className="bg-slate-800 text-white">
                       {voice.label}
                     </option>
                   ))}
@@ -428,13 +541,14 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           </div>
         </div>
 
-        {/* Hidden audio element */}
+        {/* Hidden audio element with modern event handling */}
         <audio
           ref={audioRef}
           preload="none"
           className="hidden"
           onEnded={() => {
             setIsPlaying(false);
+            setCurrentTime(0);
             // Clean up the blob URL when audio finishes
             if (audioRef.current?.src && audioRef.current.src.startsWith('blob:')) {
               URL.revokeObjectURL(audioRef.current.src);

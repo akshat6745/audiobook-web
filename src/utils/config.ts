@@ -6,7 +6,7 @@ export const DEFAULT_VOICE = 'en-US-ChristopherNeural';
 
 // Voice options available for TTS - Based on TTS Dual-Voice API Guide
 export const VOICE_OPTIONS = [
-  { label: 'Ava {Female, US}', value: 'en-US-AvaMultilingualNeural'},
+  { label: 'Ava (Female, US)', value: 'en-US-AvaMultilingualNeural'},
   { label: 'Christopher (Male, US)', value: 'en-US-ChristopherNeural' },
   { label: 'Jenny (Female, US)', value: 'en-US-JennyNeural' },
   { label: 'Sonia (Female, UK)', value: 'en-GB-SoniaNeural' },
@@ -114,7 +114,7 @@ export const setAudioSettings = (settings: AudioSettings): void => {
 
 // Voice categories for better organization
 export const NARRATOR_VOICES = [
-  { label: 'Ava {Female, US}', value: 'en-US-AvaMultilingualNeural'},
+  { label: 'Ava (Female, US)', value: 'en-US-AvaMultilingualNeural'},
   { label: 'Christopher (Male, US)', value: 'en-US-ChristopherNeural' },
   { label: 'Jenny (Female, US)', value: 'en-US-JennyNeural' },
   { label: 'Sonia (Female, UK)', value: 'en-GB-SoniaNeural' },
@@ -124,7 +124,7 @@ export const NARRATOR_VOICES = [
 ];
 
 export const DIALOGUE_VOICES = [
-  { label: 'Ava {Female, US}', value: 'en-US-AvaMultilingualNeural'},
+  { label: 'Ava (Female, US)', value: 'en-US-AvaMultilingualNeural'},
   { label: 'Christopher (Male, US)', value: 'en-US-ChristopherNeural' },
   { label: 'Jenny (Female, US)', value: 'en-US-JennyNeural' },
   { label: 'Sonia (Female, UK)', value: 'en-GB-SoniaNeural' },

@@ -1,4 +1,4 @@
-import { generateTts, generateDualVoiceTts, generateChapterAudio } from '../services/api';
+import { generateDualVoiceTts, generateChapterAudio } from '../services/api';
 
 /**
  * TTS Service for handling text-to-speech functionality

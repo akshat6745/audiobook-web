@@ -44,7 +44,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
 
     const getPageNumbers = () => {
       const pages = [];
-      const showPages = 5; // Number of pages to show around current page
+      // const showPages = 5; // Number of pages to show around current page
       
       // Always show first page
       pages.push(renderPageButton(1, currentPage === 1));

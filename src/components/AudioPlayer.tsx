@@ -135,6 +135,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       // Reset audio element when paragraph changes
       if (audioRef.current) {
         audioRef.current.pause();
+        // Clean up the previous blob URL when changing paragraphs
+        if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
+          URL.revokeObjectURL(audioRef.current.src);
+        }
+        audioRef.current.src = '';
         setIsPlaying(false);
       }
       
@@ -161,7 +166,14 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   // Auto-play when audio becomes available after loading
   useEffect(() => {
     const currentParagraph = enhancedParagraphs[currentParagraphIndex];
-    if (currentParagraph?.audioBlob && !currentParagraph.isLoading && !isPlaying) {
+    if (currentParagraph?.audioBlob && !currentParagraph.isLoading) {
+      // Set up audio source when audio becomes available
+      if (audioRef.current && !audioRef.current.src) {
+        const audioUrl = URL.createObjectURL(currentParagraph.audioBlob);
+        audioRef.current.src = audioUrl;
+        audioRef.current.playbackRate = playbackSpeed;
+      }
+      
       // If user clicked play while audio was loading, start playing now
       const playButton = document.querySelector('[data-auto-play="true"]');
       if (playButton) {
@@ -170,7 +182,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enhancedParagraphs, currentParagraphIndex, isPlaying]);
+  }, [enhancedParagraphs, currentParagraphIndex, playbackSpeed]);
 
   const handlePlay = async () => {
     console.log('Attempting to play audio for paragraph:', currentParagraphIndex);
@@ -183,19 +195,16 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       return;
     }
 
-    // If we have audio blob data, create a fresh URL and play it
+    // If we have audio blob data, set up the audio source (only if not already set)
     try {
       if (audioRef.current && currentParagraph.audioBlob) {
-        // Create a fresh blob URL to avoid garbage collection issues
-        const freshAudioUrl = URL.createObjectURL(currentParagraph.audioBlob);
-        console.log('Creating fresh blob URL:', freshAudioUrl);
-        
-        // Clean up the previous URL if it exists
-        if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
-          URL.revokeObjectURL(audioRef.current.src);
+        // Only create a new blob URL if the audio source is empty or different
+        if (!audioRef.current.src || !audioRef.current.src.startsWith('blob:')) {
+          const freshAudioUrl = URL.createObjectURL(currentParagraph.audioBlob);
+          console.log('Creating fresh blob URL:', freshAudioUrl);
+          audioRef.current.src = freshAudioUrl;
         }
         
-        audioRef.current.src = freshAudioUrl;
         audioRef.current.playbackRate = playbackSpeed;
         await audioRef.current.play();
         setIsPlaying(true);

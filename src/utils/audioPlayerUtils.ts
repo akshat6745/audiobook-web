@@ -1,12 +1,15 @@
 import { Paragraph, EnhancedParagraph } from '../types';
 import TTSService from '../services/ttsService';
 
+export const MIN_CHARACTERS = 1500;
+
 export const initializeEnhancedParagraphs = (paragraphs: Paragraph[]): EnhancedParagraph[] => {
   return paragraphs.map((paragraph, index) => ({
     paragraphNumber: index + 1,
     text: paragraph.text,
     isLoading: false,
     audioData: null,
+    audioBlob: null,
     errors: null
   }));
 };
@@ -25,7 +28,8 @@ export const clearAudioDataForVoiceChange = (paragraphs: EnhancedParagraph[]): E
     audioData: p.audioData ? (() => { 
       TTSService.cleanupAudioUrl(p.audioData!); 
       return null; 
-    })() : null
+    })() : null,
+    audioBlob: null
   }));
 };
 
@@ -40,7 +44,7 @@ export const generateAudioForParagraph = async (
   paragraph: EnhancedParagraph,
   narratorVoice: string,
   dialogueVoice: string
-): Promise<{ success: boolean; audioUrl?: string; error?: string }> => {
+): Promise<{ success: boolean; audioUrl?: string; audioBlob?: Blob; error?: string }> => {
   try {
     // Clean up previous audio URL for this paragraph
     if (paragraph.audioData) {
@@ -53,6 +57,12 @@ export const generateAudioForParagraph = async (
       narratorVoice, 
       dialogueVoice
     );
+
+    console.log('result from TTS service:', result);
+    
+    if (result.success && result.audioUrl && result.audioBlob) {
+      console.log('Audio generated successfully, blob URL:', result.audioUrl);
+    }
     
     return result;
   } catch (err) {

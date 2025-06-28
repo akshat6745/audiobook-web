@@ -97,10 +97,23 @@ export const generateTts = async (ttsRequest: TtsRequest): Promise<Blob> => {
 
 // Text-to-Speech with Dual Voices
 export const generateDualVoiceTts = async (ttsRequest: DualVoiceTtsRequest): Promise<Blob> => {
-  const response = await api.post('/tts-dual-voice', ttsRequest, {
-    responseType: 'blob',
-  });
-  return response.data;
+  try {
+    const response = await api.post('/tts-dual-voice', ttsRequest, {
+      responseType: 'blob',
+      timeout: 60000, // 60 second timeout for audio generation
+    });
+    
+    // Verify we received a valid blob
+    if (!response.data || response.data.size === 0) {
+      throw new Error('Received empty response from TTS service');
+    }
+    
+    console.log('Received TTS blob:', response.data.size, 'bytes, type:', response.data.type);
+    return response.data;
+  } catch (error) {
+    console.error('TTS API error:', error);
+    throw error;
+  }
 };
 
 // Generate TTS for Novel Chapter with Dual Voices

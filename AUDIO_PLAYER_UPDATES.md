@@ -144,12 +144,6 @@ if (result.success) {
 }
 ```
 
-### Check for Dialogue
-```tsx
-const hasDialogue = TTSService.hasDialogue(paragraphText);
-// Returns true if text contains quoted dialogue
-```
-
 ## Performance Considerations
 
 1. **Audio Generation**: TTS processing is done server-side, so network latency affects performance

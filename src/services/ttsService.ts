@@ -14,7 +14,7 @@ export class TTSService {
     text: string, 
     narratorVoice: string = 'en-US-ChristopherNeural', 
     dialogueVoice: string = 'en-US-AriaNeural'
-  ): Promise<{ success: boolean; audioUrl?: string; error?: string }> {
+  ): Promise<{ success: boolean; audioUrl?: string; audioBlob?: Blob; error?: string }> {
     try {
       const audioBlob = await generateDualVoiceTts({
         text,
@@ -22,33 +22,25 @@ export class TTSService {
         dialogueVoice: dialogueVoice
       });
 
+      // Verify the blob is valid
+      if (!audioBlob || audioBlob.size === 0) {
+        throw new Error('Received empty or invalid audio blob');
+      }
+
+      // Verify the blob is an audio file
+      if (!audioBlob.type || !audioBlob.type.startsWith('audio/')) {
+        console.warn('Received blob with non-audio type:', audioBlob.type);
+      }
+
       const audioUrl = URL.createObjectURL(audioBlob);
-      return { success: true, audioUrl };
+      console.log('Created blob URL:', audioUrl, 'Size:', audioBlob.size, 'Type:', audioBlob.type);
+      
+      return { success: true, audioUrl, audioBlob };
     } catch (error) {
       console.error('Dual-voice TTS generation failed:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to generate dual-voice audio' 
-      };
-    }
-  }
-
-  /**
-   * Generate single-voice TTS for simple text conversion
-   */
-  static async generateSingleVoiceTTS(
-    text: string, 
-    voice: string = 'en-US-ChristopherNeural'
-  ): Promise<{ success: boolean; audioUrl?: string; error?: string }> {
-    try {
-      const audioBlob = await generateTts({ text, voice });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      return { success: true, audioUrl };
-    } catch (error) {
-      console.error('Single-voice TTS generation failed:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to generate audio' 
       };
     }
   }
@@ -79,13 +71,6 @@ export class TTSService {
         error: error instanceof Error ? error.message : 'Failed to generate chapter audio' 
       };
     }
-  }
-
-  /**
-   * Detect if text contains dialogue (text within quotes)
-   */
-  static hasDialogue(text: string): boolean {
-    return /["'].+?["']/.test(text);
   }
 
   /**

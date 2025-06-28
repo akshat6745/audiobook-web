@@ -94,5 +94,7 @@ export interface EnhancedParagraph {
   text: string;
   isLoading: boolean;
   audioData: string | null; // URL for the audio blob
+  audioBlob: Blob | null; // Store the actual blob data
   errors: string | null;
+  audioUrl?: string; // Optional URL for the audio blob
 }

@@ -41,6 +41,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [enhancedParagraphs, setEnhancedParagraphs] = useState<EnhancedParagraph[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const nodeRef = useRef<HTMLDivElement | null>(null);
@@ -276,6 +277,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const handleNext = () => {
     if (currentParagraphIndex < enhancedParagraphs.length - 1) {
+      const wasPlaying = isPlaying;
       if (audioRef.current) {
         audioRef.current.pause();
         // Clean up the current blob URL to prevent memory leaks
@@ -288,6 +290,14 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       setCurrentTime(0);
       setDuration(0);
       onParagraphChange(currentParagraphIndex + 1);
+      
+      // Mark for auto-play if was playing
+      if (wasPlaying) {
+        const playButton = document.querySelector('[data-testid="play-button"]');
+        if (playButton) {
+          playButton.setAttribute('data-auto-play', 'true');
+        }
+      }
     }
   };
 
@@ -359,187 +369,165 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         defaultPosition={{ x: 20, y: 100 }}
         nodeRef={nodeRef}
       >
-        <div ref={nodeRef} className="absolute glass-dark border border-slate-700/50 rounded-2xl shadow-glow-lg z-50 min-w-[320px] max-w-[380px] pointer-events-auto transition-all duration-300 hover:shadow-glow-xl animate-fade-in-up backdrop-blur-xl">
+        <div ref={nodeRef} className="absolute glass-dark border border-slate-700/50 rounded-lg shadow-lg z-50 pointer-events-auto transition-all duration-300 backdrop-blur-xl">
         
-        {/* Drag Handle - Styled with gradient */}
-        <div className="drag-handle absolute top-0 left-0 right-0 h-4 cursor-move rounded-t-2xl bg-gradient-to-r from-primary-500/20 to-accent-500/20 flex items-center justify-center">
-          <div className="w-8 h-1 bg-gradient-to-r from-slate-400 to-slate-500 rounded-full opacity-50"></div>
-        </div>
-
-        {/* Error Display */}
-        {currentError && (
-          <div className="mx-4 mt-6 p-3 glass border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center gap-2 animate-shake">
-            <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse-glow"></div>
-            <span className="flex-1">{currentError}</span>
-          </div>
-        )}
-
-        {/* Modern Header */}
-        <div className="p-4 border-b border-slate-700/30 mt-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-600 rounded-xl flex items-center justify-center shadow-glow">
-                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-white font-semibold text-sm">Audio Player</h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs font-medium text-primary-300 bg-primary-500/20 px-2 py-1 rounded-full border border-primary-500/30">
-                    {currentParagraphIndex + 1}/{enhancedParagraphs.length}
-                  </span>
-                  <span className="text-xs text-slate-400">Paragraph</span>
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 glass rounded-xl hover:bg-red-500/20 text-slate-400 hover:text-white transition-all duration-300 focus-ring group"
-            >
-              <Close className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-            </button>
-          </div>
-          
-          {/* Current Paragraph Preview */}
-          <div className="glass p-3 rounded-xl border border-slate-600/30">
-            <p className="text-sm text-slate-300 line-clamp-2 leading-relaxed">
-              {currentParagraph?.text?.slice(0, 120) || 'No content available'}...
-            </p>
-          </div>
-        </div>
-
-        {/* Progress Bar Section */}
-        {(currentTime > 0 || duration > 0) && (
-          <div className="px-4 py-3 border-b border-slate-700/30">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span>{formatTime(currentTime)}</span>
-                <span>{formatTime(duration)}</span>
-              </div>
-              <div 
-                className="h-2 bg-slate-800 rounded-full cursor-pointer relative overflow-hidden group"
-                onClick={handleSeek}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-700 to-slate-600 rounded-full"></div>
-                <div 
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full transition-all duration-300 shadow-glow"
-                  style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
-                ></div>
-                <div 
-                  className="absolute top-1/2 w-4 h-4 bg-white rounded-full shadow-glow transform -translate-y-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{ left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modern Controls */}
-        <div className="p-4">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <button
-              onClick={handlePrevious}
-              disabled={currentParagraphIndex === 0}
-              className="p-3 glass rounded-xl text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary-500/20 hover:text-white transition-all duration-300 hover:scale-105 disabled:hover:scale-100 shadow-md hover:shadow-glow focus-ring btn-modern"
-            >
-              <SkipPrevious className="w-5 h-5" />
-            </button>
-
+        {/* Compact Header with Controls */}
+        <div className="drag-handle cursor-move p-3 rounded-t-lg bg-gradient-to-r from-primary-500/10 to-accent-500/10">
+          <div className="flex items-center gap-2">
+            {/* Play/Pause Button */}
             <button
               onClick={isPlaying ? handlePause : handlePlay}
               disabled={isCurrentLoading}
-              className="p-4 bg-gradient-to-br from-primary-500 to-accent-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-primary-600 hover:to-accent-700 transition-all duration-300 hover:scale-105 shadow-glow hover:shadow-glow-lg rounded-2xl btn-modern relative overflow-hidden"
+              data-testid="play-button"
+              className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-600 text-white disabled:opacity-50 rounded-lg flex items-center justify-center shadow-md hover:scale-105 transition-all"
             >
               {isCurrentLoading ? (
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
               ) : isPlaying ? (
-                <Pause className="w-6 h-6" />
+                <Pause className="w-4 h-4" />
               ) : (
-                <PlayArrow className="w-6 h-6" />
+                <PlayArrow className="w-4 h-4" />
               )}
-              <div className="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
             </button>
 
+            {/* Previous/Next */}
+            <button
+              onClick={handlePrevious}
+              disabled={currentParagraphIndex === 0}
+              className="w-7 h-7 glass rounded text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:text-white transition-all flex items-center justify-center"
+            >
+              <SkipPrevious className="w-4 h-4" />
+            </button>
+            
             <button
               onClick={handleNext}
               disabled={currentParagraphIndex === enhancedParagraphs.length - 1}
-              className="p-3 glass rounded-xl text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary-500/20 hover:text-white transition-all duration-300 hover:scale-105 disabled:hover:scale-100 shadow-md hover:shadow-glow focus-ring btn-modern"
+              className="w-7 h-7 glass rounded text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:text-white transition-all flex items-center justify-center"
             >
-              <SkipNext className="w-5 h-5" />
+              <SkipNext className="w-4 h-4" />
             </button>
 
+            {/* Speed Control */}
             <button
               onClick={handleSpeedClick}
-              className="px-4 py-3 bg-gradient-to-br from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 hover:scale-105 shadow-glow hover:shadow-glow-lg rounded-xl text-sm font-bold min-w-[3.5rem] btn-modern relative overflow-hidden"
+              className="px-2 py-1 bg-emerald-500/80 text-white rounded text-xs font-bold min-w-[2.5rem] hover:bg-emerald-600 transition-all"
             >
-              <span className="relative z-10">{playbackSpeed}×</span>
-              <div className="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+              {playbackSpeed}×
+            </button>
+
+            {/* Progress Info */}
+            <div className="flex-1 text-center">
+              <div className="text-xs text-slate-300 font-medium">
+                {currentParagraphIndex + 1}/{enhancedParagraphs.length}
+              </div>
+              {duration > 0 && (
+                <div className="text-xs text-slate-400">
+                  {formatTime(currentTime)}/{formatTime(duration)}
+                </div>
+              )}
+            </div>
+
+            {/* Expand/Settings Toggle */}
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="w-7 h-7 glass rounded text-slate-300 hover:text-white transition-all flex items-center justify-center"
+            >
+              <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5z"/>
+              </svg>
+            </button>
+
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="w-7 h-7 glass rounded hover:bg-red-500/20 text-slate-400 hover:text-white transition-all flex items-center justify-center"
+            >
+              <Close className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Voice Controls - Modern Glass Cards */}
-          <div className="space-y-3">
-            <div className="glass p-3 rounded-xl border border-slate-600/30">
-              <label className="block text-xs font-semibold text-primary-300 uppercase tracking-wide mb-2 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
-                </svg>
-                Narrator Voice
-              </label>
-              <select
-                value={selectedVoice}
-                onChange={(e) => handleVoiceChange(e.target.value)}
-                className="w-full px-3 py-2 glass border border-slate-600/50 rounded-lg text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-glow focus-ring bg-transparent backdrop-blur-sm"
-              >
-                <optgroup label="👨 Male Voices (Recommended for Narration)">
-                  {NARRATOR_VOICES.map((voice: VoiceOption) => (
-                    <option key={voice.value} value={voice.value} className="bg-slate-800 text-white">
-                      {voice.label}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="👩 Female Voices">
-                  {DIALOGUE_VOICES.map((voice: VoiceOption) => (
-                    <option key={voice.value} value={voice.value} className="bg-slate-800 text-white">
-                      {voice.label}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
+          {/* Compact Progress Bar */}
+          {duration > 0 && (
+            <div 
+              className="mt-2 h-1.5 bg-slate-700 rounded-full cursor-pointer relative overflow-hidden"
+              onClick={handleSeek}
+            >
+              <div 
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full transition-all"
+                style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+              ></div>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {currentError && (
+            <div className="mt-2 p-2 bg-red-500/20 border border-red-500/30 rounded text-red-300 text-xs flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
+              <span className="flex-1 truncate">{currentError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Expandable Content */}
+        {isExpanded && (
+          <div className="p-3 border-t border-slate-700/30 bg-slate-900/50 rounded-b-lg">
+            {/* Current Paragraph Preview */}
+            <div className="mb-3 p-2 glass rounded text-xs text-slate-300 max-h-16 overflow-hidden">
+              {currentParagraph?.text?.slice(0, 150) || 'No content available'}...
             </div>
 
-            <div className="glass p-3 rounded-xl border border-slate-600/30">
-              <label className="block text-xs font-semibold text-accent-300 uppercase tracking-wide mb-2 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9 9h6v6h-6z"/>
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM7 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1zm10 0c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1z"/>
-                </svg>
-                Dialogue Voice
-              </label>
-              <select
-                value={dialogueVoice}
-                onChange={(e) => handleDialogueVoiceChange(e.target.value)}
-                className="w-full px-3 py-2 glass border border-slate-600/50 rounded-lg text-white text-sm focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-glow focus-ring bg-transparent backdrop-blur-sm"
-              >
-                <optgroup label="👩 Female Voices (Recommended for Dialogue)">
-                  {DIALOGUE_VOICES.map((voice: VoiceOption) => (
-                    <option key={voice.value} value={voice.value} className="bg-slate-800 text-white">
-                      {voice.label}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="👨 Male Voices">
-                  {NARRATOR_VOICES.map((voice: VoiceOption) => (
-                    <option key={voice.value} value={voice.value} className="bg-slate-800 text-white">
-                      {voice.label}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
+            {/* Voice Controls */}
+            <div className="space-y-2">
+              <div>
+                <label className="block text-xs text-primary-300 mb-1">Narrator</label>
+                <select
+                  value={selectedVoice}
+                  onChange={(e) => handleVoiceChange(e.target.value)}
+                  className="w-full px-2 py-1 glass border border-slate-600/50 rounded text-white text-xs bg-transparent"
+                >
+                  <optgroup label="Male Voices">
+                    {NARRATOR_VOICES.map((voice: VoiceOption) => (
+                      <option key={voice.value} value={voice.value} className="bg-slate-800">
+                        {voice.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Female Voices">
+                    {DIALOGUE_VOICES.map((voice: VoiceOption) => (
+                      <option key={voice.value} value={voice.value} className="bg-slate-800">
+                        {voice.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs text-accent-300 mb-1">Dialogue</label>
+                <select
+                  value={dialogueVoice}
+                  onChange={(e) => handleDialogueVoiceChange(e.target.value)}
+                  className="w-full px-2 py-1 glass border border-slate-600/50 rounded text-white text-xs bg-transparent"
+                >
+                  <optgroup label="Female Voices">
+                    {DIALOGUE_VOICES.map((voice: VoiceOption) => (
+                      <option key={voice.value} value={voice.value} className="bg-slate-800">
+                        {voice.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Male Voices">
+                    {NARRATOR_VOICES.map((voice: VoiceOption) => (
+                      <option key={voice.value} value={voice.value} className="bg-slate-800">
+                        {voice.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Hidden audio element with modern event handling */}
         <audio
@@ -552,6 +540,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             // Clean up the blob URL when audio finishes
             if (audioRef.current?.src && audioRef.current.src.startsWith('blob:')) {
               URL.revokeObjectURL(audioRef.current.src);
+            }
+            // Auto-advance to next paragraph when current one finishes
+            if (currentParagraphIndex < enhancedParagraphs.length - 1) {
+              handleNext();
             }
           }}
         />

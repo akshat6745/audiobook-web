@@ -96,9 +96,9 @@ const ChapterContentPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="flex justify-center items-center h-64">
-          <LoadingSpinner size="lg" />
+      <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800 flex items-center justify-center pt-24">
+        <div className="text-center">
+          <LoadingSpinner size="xl" message="Loading chapter content..." variant="wave" />
         </div>
       </div>
     );
@@ -106,25 +106,40 @@ const ChapterContentPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800 pt-24 px-4">
         <div className="max-w-2xl mx-auto">
-          <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-red-800 dark:text-red-200 mb-2">
-              Error Loading Chapter
+          <div className="glass-dark p-8 rounded-2xl border border-red-500/20 shadow-glow-lg">
+            <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4 text-center">
+              Unable to Load Chapter
             </h2>
-            <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
-            <div className="flex gap-2">
+            <p className="text-red-300 mb-8 text-center leading-relaxed">{error}</p>
+            <div className="flex gap-4 justify-center">
               <button
                 onClick={loadChapterContent}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="btn-modern px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl font-semibold shadow-glow hover:shadow-glow-lg transition-all duration-300 focus-ring"
               >
-                Try Again
+                <span className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Try Again</span>
+                </span>
               </button>
               <button
                 onClick={handleBackToChapters}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                className="btn-modern px-6 py-3 glass border border-slate-600 text-slate-300 hover:text-white hover:border-primary-500/50 rounded-xl font-semibold transition-all duration-300 focus-ring"
               >
-                Back to Chapters
+                <span className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span>Back to Chapters</span>
+                </span>
               </button>
             </div>
           </div>
@@ -134,55 +149,74 @@ const ChapterContentPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleBackToChapters}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {chapterContent?.chapterTitle || `Chapter ${currentChapterNumber}`}
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {novelName} • {paragraphs.length} paragraphs
-                </p>
+    <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800 relative">
+      {/* Background effects */}
+      <div className="fixed inset-0 bg-mesh opacity-20 pointer-events-none" />
+      
+      {/* Chapter Header - Modern floating design */}
+      <div className="fixed top-20 left-0 right-0 z-40 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="glass-dark rounded-2xl border border-slate-700/50 shadow-glow-lg p-4 animate-fade-in-down">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleBackToChapters}
+                  className="p-3 glass rounded-xl hover:bg-primary-500/20 text-slate-400 hover:text-white transition-all duration-300 focus-ring"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl font-bold text-white truncate">
+                    {chapterContent?.chapterTitle || `Chapter ${currentChapterNumber}`}
+                  </h1>
+                  <p className="text-sm text-slate-400 truncate">
+                    {novelName} • {paragraphs.length} paragraphs
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Chapter Navigation */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handlePreviousChapter}
-                disabled={currentChapterNumber <= 1}
-                className="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-                Ch. {currentChapterNumber}
-              </span>
-              <button
-                onClick={handleNextChapter}
-                className="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
-              >
-                Next
-              </button>
+              {/* Chapter Navigation */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handlePreviousChapter}
+                  disabled={currentChapterNumber <= 1}
+                  className="btn-modern px-4 py-2 glass border border-slate-600 text-slate-300 hover:text-white hover:border-primary-500/50 rounded-lg font-medium transition-all duration-300 focus-ring disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <span className="flex items-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span className="hidden sm:inline">Previous</span>
+                  </span>
+                </button>
+                
+                <div className="px-4 py-2 glass rounded-lg border border-primary-500/30">
+                  <span className="text-sm font-medium text-primary-300">
+                    Ch. {currentChapterNumber}
+                  </span>
+                </div>
+                
+                <button
+                  onClick={handleNextChapter}
+                  className="btn-modern px-4 py-2 glass border border-slate-600 text-slate-300 hover:text-white hover:border-primary-500/50 rounded-lg font-medium transition-all duration-300 focus-ring"
+                >
+                  <span className="flex items-center space-x-2">
+                    <span className="hidden sm:inline">Next</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Chapter Content */}
-      <div className={`${isAudioPlayerVisible ? 'pb-64' : 'pb-8'}`}>
+      <div className={`pt-40 ${isAudioPlayerVisible ? 'pb-64' : 'pb-8'}`}>
         <ChapterContent
           paragraphs={paragraphs}
           activeParagraphIndex={activeParagraphIndex}
@@ -205,22 +239,22 @@ const ChapterContentPage: React.FC = () => {
         />
       )}
 
-      {/* Compact Mobile-Friendly Floating Audio Button */}
+      {/* Floating Audio Button */}
       {!isAudioPlayerVisible && paragraphs.length > 0 && (
         <button
           onClick={() => {
             setActiveParagraphIndex(0);
             setIsAudioPlayerVisible(true);
           }}
-          className="fixed bottom-4 right-4 p-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl shadow-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 z-50 hover:scale-105 transform-gpu backdrop-blur-sm border border-white/20"
-          title="Start Audio Playbook"
+          className="fixed bottom-6 right-6 p-4 bg-gradient-to-br from-primary-500 to-accent-600 text-white rounded-2xl shadow-glow hover:shadow-glow-lg transition-all duration-300 z-50 hover:scale-105 animate-float btn-modern"
+          title="Start Audio Playback"
         >
           <div className="relative">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.29 13.5A1 1 0 014 12.5v-5a1 1 0 01.29-.707l4.093-3.316zM15.657 5.343a1 1 0 011.414 0 7 7 0 010 9.9 1 1 0 11-1.414-1.414 5 5 0 000-7.072 1 1 0 010-1.414z" />
               <path d="M13.243 7.757a1 1 0 011.414 0 3 3 0 010 4.243 1 1 0 11-1.414-1.414 1 1 0 000-1.414 1 1 0 010-1.415z" />
             </svg>
-            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-pulse-glow"></div>
           </div>
         </button>
       )}

@@ -26,10 +26,10 @@ const ChapterList: React.FC<ChapterListProps> = ({
       <button
         key={page}
         onClick={() => onPageChange(page)}
-        className={`px-3 py-2 text-sm rounded-md font-medium ${
+        className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-300 ${
           isActive
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-700 text-white hover:bg-gray-600'
+            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-glow scale-105'
+            : 'glass-dark text-slate-300 hover:text-white hover:bg-primary-500/20 hover:scale-105'
         }`}
       >
         {page}
@@ -37,14 +37,17 @@ const ChapterList: React.FC<ChapterListProps> = ({
     );
 
     const renderEllipsis = (key: string) => (
-      <span key={key} className="px-3 py-2 text-sm text-gray-400">
-        ...
+      <span key={key} className="px-3 py-2 text-sm text-slate-400">
+        <svg className="w-2 h-2 fill-current" viewBox="0 0 8 8">
+          <circle cx="1" cy="4" r="1"/>
+          <circle cx="4" cy="4" r="1"/>
+          <circle cx="7" cy="4" r="1"/>
+        </svg>
       </span>
     );
 
     const getPageNumbers = () => {
       const pages = [];
-      // const showPages = 5; // Number of pages to show around current page
       
       // Always show first page
       pages.push(renderPageButton(1, currentPage === 1));
@@ -84,55 +87,86 @@ const ChapterList: React.FC<ChapterListProps> = ({
     };
 
     return (
-      <div className="flex items-center justify-center space-x-2 mt-8">
+      <div className="flex items-center justify-center space-x-3 mt-10">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-3 py-2 text-sm bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+          className="btn-modern px-4 py-2 text-sm glass-dark text-slate-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:text-white hover:bg-primary-500/20 transition-all duration-300 focus-ring"
         >
-          Previous
+          <span className="flex items-center space-x-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Previous</span>
+          </span>
         </button>
 
-        {getPageNumbers()}
+        <div className="flex items-center space-x-2">
+          {getPageNumbers()}
+        </div>
 
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="px-3 py-2 text-sm bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+          className="btn-modern px-4 py-2 text-sm glass-dark text-slate-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:text-white hover:bg-primary-500/20 transition-all duration-300 focus-ring"
         >
-          Next
+          <span className="flex items-center space-x-2">
+            <span>Next</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
         </button>
       </div>
     );
   };
 
   return (
-    <div>
+    <div className="pt-24 px-4 max-w-6xl mx-auto">
       {/* Latest Chapter */}
       {chapters.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">Latest Chapter</h2>
-          <div className="bg-gray-800 border border-blue-600 rounded-lg p-4 hover:border-blue-500 transition-colors">
+        <div className="mb-12 animate-fade-in-up">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="h-8 w-1 bg-gradient-to-b from-primary-400 to-primary-600 rounded-full" />
+            <h2 className="text-3xl font-bold text-gradient">Latest Chapter</h2>
+            <div className="flex-1 h-px bg-gradient-to-r from-primary-500/50 to-transparent" />
+          </div>
+          
+          <div className="glass-dark rounded-2xl p-8 border border-primary-500/20 card-hover shadow-glow-lg animate-glow">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                    NEW
-                  </span>
-                  <span className="text-blue-400 font-medium">Latest Chapter</span>
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-accent-500/30 rounded-full blur-lg animate-pulse-glow" />
+                    <span className="relative bg-gradient-to-r from-accent-400 to-accent-600 text-white text-xs px-4 py-2 rounded-full font-bold tracking-wide shadow-glow">
+                      NEW
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-gradient-to-b from-primary-400 to-accent-500" />
+                  <span className="text-primary-300 font-semibold tracking-wide">Latest Release</span>
                 </div>
-                <h3 className="text-white font-medium text-lg">
+                <h3 className="text-white font-bold text-2xl mb-2 leading-tight">
                   {parseChapterTitle(chapters[0].chapterTitle).title}
                 </h3>
-                <p className="text-gray-400 text-sm">
-                  Chapter {chapters[0].chapterNumber}
-                </p>
+                <div className="flex items-center space-x-4 text-slate-400">
+                  <span className="flex items-center space-x-2">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    <span>Chapter {chapters[0].chapterNumber}</span>
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => onChapterClick(chapters[0])}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
+                className="btn-modern bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-8 py-4 rounded-xl font-semibold shadow-glow hover:shadow-glow-lg transition-all duration-300 focus-ring animate-float"
               >
-                Read Now
+                <span className="flex items-center space-x-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Read Now</span>
+                </span>
               </button>
             </div>
           </div>
@@ -140,11 +174,18 @@ const ChapterList: React.FC<ChapterListProps> = ({
       )}
 
       {/* All Chapters */}
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-xl font-bold text-white mb-6">All Chapters</h2>
+      <div className="glass-dark rounded-2xl p-8 border border-slate-700/50 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+        <div className="flex items-center space-x-3 mb-8">
+          <div className="h-8 w-1 bg-gradient-to-b from-slate-400 to-slate-600 rounded-full" />
+          <h2 className="text-2xl font-bold text-white">All Chapters</h2>
+          <div className="flex-1 h-px bg-gradient-to-r from-slate-600/50 to-transparent" />
+          <span className="text-slate-400 text-sm font-medium">
+            {chapters.length} chapter{chapters.length !== 1 ? 's' : ''}
+          </span>
+        </div>
         
-        <div className="space-y-2">
-          {chapters.slice(1).map((chapter) => {
+        <div className="space-y-3">
+          {chapters.slice(1).map((chapter, index) => {
             const { title, publishedTime } = parseChapterTitle(chapter.chapterTitle);
             const isRead = userProgress && chapter.chapterNumber <= userProgress;
             
@@ -152,44 +193,58 @@ const ChapterList: React.FC<ChapterListProps> = ({
               <div
                 key={`${chapter.chapterNumber}-${chapter.chapterTitle}`}
                 onClick={() => onChapterClick(chapter)}
-                className="flex items-center justify-between p-4 bg-gray-700/50 hover:bg-gray-700 rounded-lg cursor-pointer transition-colors group"
+                className="group relative overflow-hidden glass rounded-xl p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-glow border border-slate-700/30 hover:border-primary-500/30 animate-slide-in-right"
+                style={{ animationDelay: `${(index + 1) * 0.1}s` }}
               >
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3">
-                    <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium ${
+                {/* Background gradient on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-500/5 to-accent-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <div className={`relative w-12 h-12 flex items-center justify-center rounded-xl font-bold transition-all duration-300 ${
                       isRead 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-600 text-gray-300'
+                        ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-glow' 
+                        : 'glass-dark text-slate-300 group-hover:text-primary-300'
                     }`}>
-                      {chapter.chapterNumber}
-                    </span>
-                    <div>
-                      <h3 className="text-white font-medium group-hover:text-blue-400 transition-colors">
+                      {isRead && (
+                        <div className="absolute inset-0 bg-emerald-400/20 rounded-xl blur-md animate-pulse-glow" />
+                      )}
+                      <span className="relative">{chapter.chapterNumber}</span>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-semibold text-lg group-hover:text-primary-300 transition-colors duration-300 truncate">
                         {title}
                       </h3>
                       {publishedTime && (
-                        <p className="text-gray-400 text-sm">
-                          {publishedTime}
+                        <p className="text-slate-400 text-sm mt-1 flex items-center space-x-2">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                          <span>{publishedTime}</span>
                         </p>
                       )}
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  {isRead && (
-                    <span className="text-green-400 text-sm font-medium">
-                      ✓ Read
-                    </span>
-                  )}
-                  <svg 
-                    className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  
+                  <div className="flex items-center space-x-4">
+                    {isRead && (
+                      <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm font-medium">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                        <span>Completed</span>
+                      </div>
+                    )}
+                    <svg 
+                      className="w-6 h-6 text-slate-400 group-hover:text-primary-400 transition-all duration-300 group-hover:scale-110" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             );

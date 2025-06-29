@@ -354,57 +354,57 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
   const currentError = currentParagraph?.errors || null;
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700">
+    <div className="w-full max-w-4xl mx-auto bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700/50 backdrop-blur-sm">
       {/* Main Controls */}
-      <div className="p-4 border-b border-gray-200 dark:border-slate-700">
-        <div className="flex items-center justify-between gap-4">
+      <div className="p-6 border-b border-gray-100 dark:border-slate-700/50 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-t-2xl">
+        <div className="flex items-center justify-between gap-6">
           {/* Left: Playback Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={handlePrevious}
               disabled={currentParagraphIndex === 0}
-              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group p-3 rounded-full bg-white/90 hover:bg-white dark:bg-slate-700/90 dark:hover:bg-slate-600 shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100"
             >
-              <SkipPrevious className="w-5 h-5" />
+              <SkipPrevious className="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
             </button>
 
             <button
               onClick={isPlaying ? handlePause : handlePlay}
               disabled={isCurrentLoading}
-              className="p-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group p-4 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 disabled:hover:scale-100 ring-4 ring-blue-500/20"
             >
               {isCurrentLoading ? (
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-7 w-7 border-3 border-white border-t-transparent"></div>
               ) : isPlaying ? (
-                <Pause className="w-6 h-6" />
+                <Pause className="w-7 h-7" />
               ) : (
-                <PlayArrow className="w-6 h-6" />
+                <PlayArrow className="w-7 h-7" />
               )}
             </button>
 
             <button
               onClick={handleNext}
               disabled={currentParagraphIndex === enhancedParagraphs.length - 1}
-              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group p-3 rounded-full bg-white/90 hover:bg-white dark:bg-slate-700/90 dark:hover:bg-slate-600 shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100"
             >
-              <SkipNext className="w-5 h-5" />
+              <SkipNext className="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
             </button>
 
             <button
               onClick={handleSpeedClick}
-              className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-full text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ring-2 ring-emerald-500/20"
             >
               {playbackSpeed}×
             </button>
           </div>
 
           {/* Right: Progress Info */}
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            <span className="font-medium">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/60 dark:bg-slate-800/60 px-4 py-2 rounded-full shadow-sm backdrop-blur-sm">
+            <span className="text-blue-600 dark:text-blue-400 font-bold">
               {currentParagraphIndex + 1} / {enhancedParagraphs.length}
             </span>
             {duration > 0 && (
-              <span className="ml-2">
+              <span className="ml-3 text-gray-600 dark:text-gray-400">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
             )}
@@ -413,40 +413,43 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
 
         {/* Progress Bar */}
         {duration > 0 && (
-          <div className="mt-4">
+          <div className="mt-6">
             <div
-              className="h-2 bg-gray-200 dark:bg-slate-700 rounded-full cursor-pointer relative overflow-hidden"
+              className="h-3 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-slate-700 dark:to-slate-600 rounded-full cursor-pointer relative overflow-hidden shadow-inner group"
               onClick={handleSeek}
             >
               <div
-                className="absolute top-0 left-0 h-full bg-blue-600 rounded-full transition-all"
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-full transition-all duration-300 shadow-lg group-hover:shadow-xl"
                 style={{
                   width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
                 }}
-              ></div>
+              >
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+              </div>
             </div>
           </div>
         )}
 
         {/* Error Display */}
         {currentError && (
-          <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-red-700 dark:text-red-400 text-sm">{currentError}</p>
+          <div className="mt-4 p-4 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/30 dark:to-pink-900/30 border border-red-200 dark:border-red-800/50 rounded-xl shadow-lg backdrop-blur-sm">
+            <p className="text-red-700 dark:text-red-400 text-sm font-medium">{currentError}</p>
           </div>
         )}
       </div>
 
       {/* Voice Controls */}
-      <div className="p-4 bg-gray-50 dark:bg-slate-900/50">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <div className="p-6 bg-gradient-to-r from-gray-50/80 to-blue-50/80 dark:from-slate-900/80 dark:to-slate-800/80 backdrop-blur-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
               Narrator Voice
             </label>
             <select
               value={selectedVoice}
               onChange={(e) => handleVoiceChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-xl bg-white/90 dark:bg-slate-800/90 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm font-medium"
             >
               <optgroup label="Male Voices">
                 {NARRATOR_VOICES.map((voice: VoiceOption) => (
@@ -465,14 +468,15 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
               Dialogue Voice
             </label>
             <select
               value={dialogueVoice}
               onChange={(e) => handleDialogueVoiceChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-xl bg-white/90 dark:bg-slate-800/90 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm font-medium"
             >
               <optgroup label="Female Voices">
                 {DIALOGUE_VOICES.map((voice: VoiceOption) => (
@@ -494,11 +498,12 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
       </div>
 
       {/* Current Paragraph Preview */}
-      <div className="p-4 border-t border-gray-200 dark:border-slate-700">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <div className="p-6 border-t border-gray-100 dark:border-slate-700/50 bg-gradient-to-br from-white/60 to-gray-50/60 dark:from-slate-800/60 dark:to-slate-900/60 backdrop-blur-sm rounded-b-2xl">
+        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+          <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full animate-pulse"></div>
           Current Paragraph
         </h3>
-        <div className="p-3 bg-gray-50 dark:bg-slate-900/50 rounded-lg text-sm text-gray-700 dark:text-gray-300 max-h-32 overflow-y-auto">
+        <div className="p-4 bg-white/80 dark:bg-slate-900/80 rounded-xl text-sm text-gray-700 dark:text-gray-300 max-h-36 overflow-y-auto shadow-inner backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 font-medium leading-relaxed">
           {currentParagraph?.text || "No content available"}
         </div>
       </div>

@@ -55,6 +55,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef<Set<number>>(new Set()); // Track which paragraphs are currently loading
 
+  const enhancedParagraphsRef = useRef(enhancedParagraphs);
+  useEffect(() => {
+    enhancedParagraphsRef.current = enhancedParagraphs;
+  }, [enhancedParagraphs]);
+
   // Initialize enhanced paragraphs from basic paragraphs
   useEffect(() => {
     setEnhancedParagraphs(initializeEnhancedParagraphs(paragraphs));
@@ -86,27 +91,20 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   // Lazy load audio for a specific paragraph
   const lazyLoadAudio = useCallback(
     async (index: number) => {
-      console.log("Lazy loading audio for paragraph:", index);
       if (index < 0) return;
 
+      // Use ref to get the most up-to-date paragraph state
+      const currentParagraph = enhancedParagraphsRef.current[index];
+
       // Check if already loading or loaded to prevent duplicate calls
-      if (loadingRef.current.has(index)) {
-        console.log("Skipping duplicate load for paragraph:", index);
-        return;
-      }
-
-      // Use functional update to get current state to avoid stale closures
-      const currentParagraph = enhancedParagraphs[index];
-
       if (
         !currentParagraph ||
         currentParagraph.audioBlob ||
-        currentParagraph.isLoading
+        currentParagraph.isLoading ||
+        loadingRef.current.has(index)
       ) {
-        return; // Already fetched or loading
+        return;
       }
-
-      console.log("Starting audio generation for paragraph:", index);
 
       // Mark as loading to prevent duplicates
       loadingRef.current.add(index);
@@ -121,27 +119,20 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           dialogueVoice,
         );
 
-        if (result.success && result.audioUrl && result.audioBlob) {
+        if (result.success && result.audioBlob) {
           updateParagraph(index, {
-            audioData: result.audioUrl,
+            audioData: null, // We don't store blob URLs anymore
             audioBlob: result.audioBlob,
             isLoading: false,
             errors: null,
           });
-          console.log("Audio generated successfully for paragraph:", index);
         } else {
           updateParagraph(index, {
             errors: result.error || "Failed to generate audio",
             isLoading: false,
           });
-          console.log(
-            "Audio generation failed for paragraph:",
-            index,
-            result.error,
-          );
         }
       } catch (error) {
-        console.error("Audio generation error:", error);
         updateParagraph(index, {
           errors: "Failed to generate audio",
           isLoading: false,
@@ -151,19 +142,17 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         loadingRef.current.delete(index);
       }
     },
-    [enhancedParagraphs, selectedVoice, dialogueVoice, updateParagraph],
+    [selectedVoice, dialogueVoice, updateParagraph],
   );
 
   // Lazy load audio for current paragraph and preload upcoming ones
   useEffect(() => {
     if (enhancedParagraphs.length > 0 && currentParagraphIndex >= 0) {
-      console.log("Triggering lazy load for paragraph:", currentParagraphIndex);
-
       // Reset audio element when paragraph changes
       if (audioRef.current) {
         audioRef.current.pause();
-        // Clean up the previous blob URL when changing paragraphs
-        if (audioRef.current.src && audioRef.current.src.startsWith("blob:")) {
+        // Revoke the blob URL if it exists
+        if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
           URL.revokeObjectURL(audioRef.current.src);
         }
         audioRef.current.src = "";
@@ -184,12 +173,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         i < enhancedParagraphs.length && totalCharacters < MIN_CHARACTERS;
         i++
       ) {
-        totalCharacters += enhancedParagraphs[i].text.length;
+        totalCharacters += enhancedParagraphsRef.current[i].text.length;
         lazyLoadAudio(i);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentParagraphIndex, enhancedParagraphs.length]);
+  }, [currentParagraphIndex, enhancedParagraphs.length, lazyLoadAudio]);
 
   // Update playback speed when changed
   useEffect(() => {
@@ -230,13 +219,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   useEffect(() => {
     const currentParagraph = enhancedParagraphs[currentParagraphIndex];
     if (currentParagraph?.audioBlob && !currentParagraph.isLoading) {
-      // Set up audio source when audio becomes available
-      if (audioRef.current && !audioRef.current.src) {
-        const audioUrl = URL.createObjectURL(currentParagraph.audioBlob);
-        audioRef.current.src = audioUrl;
-        audioRef.current.playbackRate = playbackSpeed;
-      }
-
       // If user clicked play while audio was loading, start playing now
       const playButton = document.querySelector('[data-auto-play="true"]');
       if (playButton) {
@@ -248,47 +230,79 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   }, [enhancedParagraphs, currentParagraphIndex, playbackSpeed]);
 
   const handlePlay = async () => {
-    console.log(
-      "Attempting to play audio for paragraph:",
-      currentParagraphIndex,
-    );
     const currentParagraph = enhancedParagraphs[currentParagraphIndex];
-    if (!currentParagraph) return;
-
-    // If audio blob is not available yet, just return (audio should be loading from useEffect)
-    if (!currentParagraph.audioBlob) {
-      console.log(
-        "Audio blob not ready yet for paragraph:",
-        currentParagraphIndex,
-        "isLoading:",
-        currentParagraph.isLoading,
-      );
+    if (!currentParagraph || !audioRef.current) {
       return;
     }
 
-    // If we have audio blob data, set up the audio source (only if not already set)
-    try {
-      if (audioRef.current && currentParagraph.audioBlob) {
-        // Only create a new blob URL if the audio source is empty or different
-        if (
-          !audioRef.current.src ||
-          !audioRef.current.src.startsWith("blob:")
-        ) {
-          const freshAudioUrl = URL.createObjectURL(currentParagraph.audioBlob);
-          console.log("Creating fresh blob URL:", freshAudioUrl);
-          audioRef.current.src = freshAudioUrl;
-        }
+    // If audio blob is not available yet, just return (audio should be loading from useEffect)
+    if (!currentParagraph.audioBlob) {
+      return;
+    }
 
-        audioRef.current.playbackRate = playbackSpeed;
-        await audioRef.current.play();
-        setIsPlaying(true);
-        console.log("Playing audio for paragraph:", currentParagraphIndex);
+    try {
+      const audio = audioRef.current;
+      
+      // Create a fresh blob URL from the stored blob to ensure it's valid
+      if (currentParagraph.audioBlob) {
+        // Revoke the old URL if it exists
+        if (audio.src && audio.src.startsWith('blob:')) {
+          URL.revokeObjectURL(audio.src);
+        }
+        
+        // Create a new blob URL from the stored blob
+        const freshBlobUrl = URL.createObjectURL(currentParagraph.audioBlob);
+        
+        audio.src = freshBlobUrl;
+        
+        // Wait for the audio to be ready to play
+        await new Promise<void>((resolve, reject) => {
+          const handleCanPlay = () => {
+            audio.removeEventListener('canplay', handleCanPlay);
+            audio.removeEventListener('error', handleError);
+            audio.removeEventListener('loadeddata', handleLoadedData);
+            resolve();
+          };
+          
+          const handleLoadedData = () => {
+            audio.removeEventListener('canplay', handleCanPlay);
+            audio.removeEventListener('error', handleError);
+            audio.removeEventListener('loadeddata', handleLoadedData);
+            resolve();
+          };
+          
+          const handleError = (event: Event) => {
+            console.error("Audio loading error:", event);
+            audio.removeEventListener('canplay', handleCanPlay);
+            audio.removeEventListener('error', handleError);
+            audio.removeEventListener('loadeddata', handleLoadedData);
+            reject(new Error('Audio failed to load'));
+          };
+          
+          // If audio is already ready, resolve immediately
+          if (audio.readyState >= 2) { // HAVE_CURRENT_DATA or better
+            resolve();
+            return;
+          }
+          
+          audio.addEventListener('canplay', handleCanPlay);
+          audio.addEventListener('loadeddata', handleLoadedData);
+          audio.addEventListener('error', handleError);
+          
+          // Load the audio
+          audio.load();
+        });
       }
+
+      // Ensure playback speed is set correctly
+      audio.playbackRate = playbackSpeed;
+      
+      await audio.play();
+      setIsPlaying(true);
     } catch (err) {
       updateParagraph(currentParagraphIndex, {
         errors: "Failed to play audio. Please try again.",
       });
-      console.error("Audio play error:", err);
     }
   };
 
@@ -301,8 +315,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     if (currentParagraphIndex > 0) {
       if (audioRef.current) {
         audioRef.current.pause();
-        // Clean up the current blob URL to prevent memory leaks
-        if (audioRef.current.src && audioRef.current.src.startsWith("blob:")) {
+        // Revoke the blob URL if it exists
+        if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
           URL.revokeObjectURL(audioRef.current.src);
         }
         audioRef.current.src = "";
@@ -319,8 +333,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       const wasPlaying = isPlaying;
       if (audioRef.current) {
         audioRef.current.pause();
-        // Clean up the current blob URL to prevent memory leaks
-        if (audioRef.current.src && audioRef.current.src.startsWith("blob:")) {
+        // Revoke the blob URL if it exists
+        if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
           URL.revokeObjectURL(audioRef.current.src);
         }
         audioRef.current.src = "";
@@ -344,15 +358,17 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const handleVoiceChange = (voice: string) => {
     setSelectedVoice(voice);
-    audioRef.current?.pause();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      // Revoke the blob URL if it exists
+      if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
+        URL.revokeObjectURL(audioRef.current.src);
+      }
+      audioRef.current.src = "";
+    }
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-    // Clean up current audio source
-    if (audioRef.current?.src && audioRef.current.src.startsWith("blob:")) {
-      URL.revokeObjectURL(audioRef.current.src);
-      audioRef.current.src = "";
-    }
     // Clear loading tracking and audio data for all paragraphs so they regenerate with new voice
     loadingRef.current.clear();
     setEnhancedParagraphs((prev) => clearAudioDataForVoiceChange(prev));
@@ -360,15 +376,17 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const handleDialogueVoiceChange = (voice: string) => {
     setDialogueVoice(voice);
-    audioRef.current?.pause();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      // Revoke the blob URL if it exists
+      if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
+        URL.revokeObjectURL(audioRef.current.src);
+      }
+      audioRef.current.src = "";
+    }
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-    // Clean up current audio source
-    if (audioRef.current?.src && audioRef.current.src.startsWith("blob:")) {
-      URL.revokeObjectURL(audioRef.current.src);
-      audioRef.current.src = "";
-    }
     // Clear loading tracking and audio data for all paragraphs so they regenerate with new voice
     loadingRef.current.clear();
     setEnhancedParagraphs((prev) => clearAudioDataForVoiceChange(prev));
@@ -616,12 +634,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             onEnded={() => {
               setIsPlaying(false);
               setCurrentTime(0);
-              // Clean up the blob URL when audio finishes
-              if (
-                audioRef.current?.src &&
-                audioRef.current.src.startsWith("blob:")
-              ) {
+              // Revoke the current blob URL since we're done with it
+              if (audioRef.current?.src && audioRef.current.src.startsWith('blob:')) {
                 URL.revokeObjectURL(audioRef.current.src);
+                audioRef.current.src = "";
               }
               // Auto-advance to next paragraph when current one finishes
               if (currentParagraphIndex < enhancedParagraphs.length - 1) {

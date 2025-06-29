@@ -29,12 +29,7 @@ export const clearAudioDataForVoiceChange = (
 ): EnhancedParagraph[] => {
   return paragraphs.map((p) => ({
     ...p,
-    audioData: p.audioData
-      ? (() => {
-          TTSService.cleanupAudioUrl(p.audioData!);
-          return null;
-        })()
-      : null,
+    audioData: null, // Always set to null since we don't store URLs anymore
     audioBlob: null,
   }));
 };
@@ -71,8 +66,17 @@ export const generateAudioForParagraph = async (
 
     console.log("result from TTS service:", result);
 
-    if (result.success && result.audioUrl && result.audioBlob) {
-      console.log("Audio generated successfully, blob URL:", result.audioUrl);
+    if (result.success && result.audioBlob) {
+      // Don't store the blob URL in audioData - we'll create fresh ones as needed
+      // Just store the blob and return a temporary URL for immediate use
+      const tempUrl = URL.createObjectURL(result.audioBlob);
+      console.log("Audio generated successfully, created temp blob URL:", tempUrl);
+      
+      return {
+        success: true,
+        audioUrl: tempUrl, // This is just for the return value
+        audioBlob: result.audioBlob,
+      };
     }
 
     return result;

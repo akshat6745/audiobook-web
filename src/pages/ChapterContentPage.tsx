@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ChapterContent from "../components/ChapterContent";
-import AudioPlayer from "../components/AudioPlayer";
+import SimpleAudioPlayer from "../components/SimpleAudioPlayer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { fetchChapterContent, saveUserProgress } from "../services/api";
 import { ChapterContent as ChapterContentType, Paragraph } from "../types";
@@ -26,7 +26,7 @@ const ChapterContentPage: React.FC = () => {
   const [activeParagraphIndex, setActiveParagraphIndex] = useState<
     number | null
   >(null);
-  const [isAudioPlayerVisible, setIsAudioPlayerVisible] = useState(false);
+  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
 
   const currentChapterNumber = parseInt(chapterNumber || "1", 10);
   const username = getCurrentUsername();
@@ -92,16 +92,11 @@ const ChapterContentPage: React.FC = () => {
 
   const handleParagraphClick = (index: number) => {
     setActiveParagraphIndex(index);
-    setIsAudioPlayerVisible(true);
+    setShowAudioPlayer(true);
   };
 
   const handleParagraphChange = (index: number) => {
     setActiveParagraphIndex(index);
-  };
-
-  const handleCloseAudioPlayer = () => {
-    setIsAudioPlayerVisible(false);
-    setActiveParagraphIndex(null);
   };
 
   const handlePreviousChapter = () => {
@@ -363,7 +358,7 @@ const ChapterContentPage: React.FC = () => {
       </div>
 
       {/* Chapter Content */}
-      <div className={`pt-40 ${isAudioPlayerVisible ? "pb-64" : "pb-8"}`}>
+      <div className="pt-40 pb-8">
         <ChapterContent
           paragraphs={paragraphs}
           activeParagraphIndex={activeParagraphIndex}
@@ -376,36 +371,37 @@ const ChapterContentPage: React.FC = () => {
       </div>
 
       {/* Audio Player */}
-      {isAudioPlayerVisible &&
+      {showAudioPlayer &&
         paragraphs.length > 0 &&
         activeParagraphIndex !== null && (
-          <AudioPlayer
-            paragraphs={paragraphs}
-            currentParagraphIndex={activeParagraphIndex}
-            onParagraphChange={handleParagraphChange}
-            onClose={handleCloseAudioPlayer}
-            isVisible={isAudioPlayerVisible}
-          />
+          <div className="px-4 pb-8">
+            <SimpleAudioPlayer
+              paragraphs={paragraphs}
+              currentParagraphIndex={activeParagraphIndex}
+              onParagraphChange={handleParagraphChange}
+            />
+          </div>
         )}
 
-      {/* Floating Audio Button */}
-      {!isAudioPlayerVisible && paragraphs.length > 0 && (
-        <button
-          onClick={() => {
-            setActiveParagraphIndex(0);
-            setIsAudioPlayerVisible(true);
-          }}
-          className="fixed bottom-6 right-6 p-4 bg-gradient-to-br from-primary-500 to-accent-600 text-white rounded-2xl shadow-glow hover:shadow-glow-lg transition-all duration-300 z-50 hover:scale-105 animate-float btn-modern"
-          title="Start Audio Playback"
-        >
-          <div className="relative">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.29 13.5A1 1 0 014 12.5v-5a1 1 0 01.29-.707l4.093-3.316zM15.657 5.343a1 1 0 011.414 0 7 7 0 010 9.9 1 1 0 11-1.414-1.414 5 5 0 000-7.072 1 1 0 010-1.414z" />
-              <path d="M13.243 7.757a1 1 0 011.414 0 3 3 0 010 4.243 1 1 0 11-1.414-1.414 1 1 0 000-1.414 1 1 0 010-1.415z" />
-            </svg>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-pulse-glow"></div>
-          </div>
-        </button>
+      {/* Show Audio Player Button */}
+      {!showAudioPlayer && paragraphs.length > 0 && (
+        <div className="px-4 pb-8">
+          <button
+            onClick={() => {
+              setActiveParagraphIndex(0);
+              setShowAudioPlayer(true);
+            }}
+            className="w-full p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] font-medium"
+          >
+            <div className="flex items-center justify-center gap-3">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.29 13.5A1 1 0 014 12.5v-5a1 1 0 01.29-.707l4.093-3.316zM15.657 5.343a1 1 0 011.414 0 7 7 0 010 9.9 1 1 0 11-1.414-1.414 5 5 0 000-7.072 1 1 0 010-1.414z" />
+                <path d="M13.243 7.757a1 1 0 011.414 0 3 3 0 010 4.243 1 1 0 11-1.414-1.414 1 1 0 000-1.414 1 1 0 010-1.415z" />
+              </svg>
+              Start Audio Playback
+            </div>
+          </button>
+        </div>
       )}
     </div>
   );

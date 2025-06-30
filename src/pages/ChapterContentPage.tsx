@@ -9,6 +9,9 @@ import {
   getCurrentUsername,
   parseChapterTitle,
   parseNovelName,
+  DEFAULT_NARRATOR_VOICE,
+  DEFAULT_DIALOGUE_VOICE,
+  API_BASE_URL,
 } from "../utils/config";
 
 const ChapterContentPage: React.FC = () => {
@@ -27,11 +30,12 @@ const ChapterContentPage: React.FC = () => {
     number | null
   >(null);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const currentChapterNumber = parseInt(chapterNumber || "1", 10);
   const username = getCurrentUsername();
   const [chapterInputValue, setChapterInputValue] = useState(
-    currentChapterNumber.toString(),
+    currentChapterNumber.toString()
   );
 
   const loadChapterContent = useCallback(async () => {
@@ -43,7 +47,7 @@ const ChapterContentPage: React.FC = () => {
 
       const content = await fetchChapterContent(
         novelName,
-        currentChapterNumber,
+        currentChapterNumber
       );
       setChapterContent(content);
 
@@ -59,7 +63,7 @@ const ChapterContentPage: React.FC = () => {
     } catch (err) {
       console.error("Error loading chapter content:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to load chapter content",
+        err instanceof Error ? err.message : "Failed to load chapter content"
       );
     } finally {
       setLoading(false);
@@ -80,7 +84,7 @@ const ChapterContentPage: React.FC = () => {
   useEffect(() => {
     if (username && novelName && currentChapterNumber && chapterContent) {
       saveUserProgress(username, novelName, currentChapterNumber).catch(
-        console.error,
+        console.error
       );
     }
   }, [username, novelName, currentChapterNumber, chapterContent]);
@@ -102,14 +106,14 @@ const ChapterContentPage: React.FC = () => {
   const handlePreviousChapter = () => {
     if (currentChapterNumber > 1) {
       navigate(
-        `/novels/${encodeURIComponent(novelName!)}/chapters/${currentChapterNumber - 1}`,
+        `/novels/${encodeURIComponent(novelName!)}/chapters/${currentChapterNumber - 1}`
       );
     }
   };
 
   const handleNextChapter = () => {
     navigate(
-      `/novels/${encodeURIComponent(novelName!)}/chapters/${currentChapterNumber + 1}`,
+      `/novels/${encodeURIComponent(novelName!)}/chapters/${currentChapterNumber + 1}`
     );
   };
 
@@ -121,7 +125,7 @@ const ChapterContentPage: React.FC = () => {
     const targetChapter = parseInt(chapterInputValue, 10);
     if (!isNaN(targetChapter) && targetChapter > 0) {
       navigate(
-        `/novels/${encodeURIComponent(novelName!)}/chapters/${targetChapter}`,
+        `/novels/${encodeURIComponent(novelName!)}/chapters/${targetChapter}`
       );
     }
   };
@@ -133,6 +137,45 @@ const ChapterContentPage: React.FC = () => {
   const handleChapterInputKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleChapterNavigation();
+    }
+  };
+
+  const handleDownloadChapter = async () => {
+    if (!novelName || !currentChapterNumber) {
+      console.error("Novel name or chapter number not provided");
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/novel-with-tts?novelName=${encodeURIComponent(novelName)}&chapterNumber=${currentChapterNumber}&voice=${encodeURIComponent(DEFAULT_NARRATOR_VOICE)}&dialogueVoice=${encodeURIComponent(DEFAULT_DIALOGUE_VOICE)}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "audio/mp3",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${novelName.replace(/[^a-z0-9]/gi, "_")}_chapter_${currentChapterNumber}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to download chapter:", error);
+      // You could add a toast notification here
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -261,7 +304,7 @@ const ChapterContentPage: React.FC = () => {
                     {
                       parseChapterTitle(
                         chapterContent?.chapterTitle ||
-                          `Chapter ${currentChapterNumber}`,
+                          `Chapter ${currentChapterNumber}`
                       ).title
                     }
                   </h1>
@@ -349,6 +392,34 @@ const ChapterContentPage: React.FC = () => {
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
+                  </span>
+                </button>
+
+                <button
+                  onClick={handleDownloadChapter}
+                  disabled={isDownloading}
+                  className="btn-modern px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-lg font-medium transition-all duration-300 focus-ring disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                  title="Download Chapter as MP3"
+                >
+                  <span className="flex items-center space-x-2">
+                    {isDownloading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    ) : (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    )}
+                    <span className="hidden sm:inline">Download</span>
                   </span>
                 </button>
               </div>

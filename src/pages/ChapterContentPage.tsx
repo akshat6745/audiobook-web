@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ChapterContent from "../components/ChapterContent";
 import SimpleAudioPlayer from "../components/SimpleAudioPlayer";
@@ -31,6 +31,10 @@ const ChapterContentPage: React.FC = () => {
   >(null);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+
+  // Ref for auto-scrolling functionality
+  const contentContainerRef = useRef<HTMLDivElement>(null);
 
   const currentChapterNumber = parseInt(chapterNumber || "1", 10);
   const username = getCurrentUsername();
@@ -93,6 +97,49 @@ const ChapterContentPage: React.FC = () => {
   useEffect(() => {
     setChapterInputValue(currentChapterNumber.toString());
   }, [currentChapterNumber]);
+
+  // Auto-scroll to active paragraph when it changes
+  useEffect(() => {
+    if (activeParagraphIndex !== null && showAudioPlayer) {
+      const scrollToActiveParagraph = () => {
+        setIsAutoScrolling(true);
+        
+        // Use querySelector to find the paragraph element
+        const paragraphElement = document.querySelector(`[data-paragraph-index="${activeParagraphIndex}"]`) as HTMLElement;
+        
+        if (paragraphElement) {
+          // Calculate the offset to center the paragraph in the viewport
+          const rect = paragraphElement.getBoundingClientRect();
+          const windowHeight = window.innerHeight;
+          const elementHeight = rect.height;
+          
+          // Calculate the desired scroll position to center the element
+          const offsetTop = paragraphElement.offsetTop;
+          const centerOffset = windowHeight / 2 - elementHeight / 2;
+          const scrollToPosition = offsetTop - centerOffset;
+          
+          // Smooth scroll to the paragraph
+          window.scrollTo({
+            top: Math.max(0, scrollToPosition), // Ensure we don't scroll above the page
+            behavior: 'smooth'
+          });
+          
+          // Reset auto-scrolling state after animation completes
+          setTimeout(() => setIsAutoScrolling(false), 1000);
+        } else {
+          setIsAutoScrolling(false);
+        }
+      };
+
+      // Add a small delay to ensure the paragraph is rendered and styled
+      const timeoutId = setTimeout(scrollToActiveParagraph, 300);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        setIsAutoScrolling(false);
+      };
+    }
+  }, [activeParagraphIndex, showAudioPlayer]);
 
   const handleParagraphClick = (index: number) => {
     setActiveParagraphIndex(index);
@@ -429,7 +476,7 @@ const ChapterContentPage: React.FC = () => {
       </div>
 
       {/* Chapter Content */}
-      <div className="pt-40 pb-8">
+      <div className="pt-40 pb-8" ref={contentContainerRef}>
         <ChapterContent
           paragraphs={paragraphs}
           activeParagraphIndex={activeParagraphIndex}
@@ -440,6 +487,16 @@ const ChapterContentPage: React.FC = () => {
           timestamp={chapterContent?.timestamp || "3 years ago"}
         />
       </div>
+
+      {/* Auto-scroll indicator */}
+      {isAutoScrolling && (
+        <div className="fixed top-20 right-4 z-40 bg-primary-500/90 text-white px-4 py-2 rounded-full shadow-lg backdrop-blur-sm border border-primary-400/50 animate-fade-in">
+          <div className="flex items-center space-x-2 text-sm font-medium">
+            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <span>Auto-scrolling to current paragraph</span>
+          </div>
+        </div>
+      )}
 
       {/* Audio Player */}
       {showAudioPlayer &&

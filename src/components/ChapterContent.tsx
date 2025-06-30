@@ -100,6 +100,7 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
         {paragraphs.map((paragraph, index) => (
           <div
             key={index}
+            data-paragraph-index={index}
             className={`
               paragraph-item glass-dark p-4 rounded-xl cursor-pointer transition-all duration-300 border relative overflow-hidden animate-fade-in-up
               ${

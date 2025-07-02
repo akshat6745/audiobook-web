@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ChapterContent from "../components/ChapterContent";
-import SimpleAudioPlayer from "../components/SimpleAudioPlayer";
+import AudioPlayer from "../components/AudioPlayer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { fetchChapterContent, saveUserProgress } from "../services/api";
 import { ChapterContent as ChapterContentType, Paragraph } from "../types";
@@ -11,6 +11,7 @@ import {
   parseNovelName,
   DEFAULT_NARRATOR_VOICE,
   DEFAULT_DIALOGUE_VOICE,
+  SPEED_OPTIONS,
   API_BASE_URL,
 } from "../utils/config";
 
@@ -32,6 +33,16 @@ const ChapterContentPage: React.FC = () => {
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+
+  // Audio player settings state
+  const [audioSettings, setAudioSettings] = useState({
+    playbackSpeed: SPEED_OPTIONS[2].value,
+    narratorVoice: DEFAULT_NARRATOR_VOICE,
+    dialogueVoice: DEFAULT_DIALOGUE_VOICE,
+  });
+
+  // Track if we're auto-advancing to continue playing
+  const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
 
   // Ref for auto-scrolling functionality
   const contentContainerRef = useRef<HTMLDivElement>(null);
@@ -97,6 +108,28 @@ const ChapterContentPage: React.FC = () => {
   useEffect(() => {
     setChapterInputValue(currentChapterNumber.toString());
   }, [currentChapterNumber]);
+
+  // Handle auto-play when new chapter loads after chapter completion
+  useEffect(() => {
+    if (paragraphs.length > 0 && activeParagraphIndex === 0 && showAudioPlayer) {
+      // Check if this is an auto-chapter-advance scenario
+      const playButton = document.querySelector('[data-testid="play-button"]');
+      if (playButton && playButton.hasAttribute("data-auto-play")) {
+        // Small delay to ensure AudioPlayer is ready
+        setTimeout(() => {
+          if (playButton.hasAttribute("data-auto-play")) {
+            playButton.removeAttribute("data-auto-play");
+            // The AudioPlayer's auto-play logic will handle the actual playback
+          }
+        }, 200);
+      }
+      
+      // Reset auto-advancing state once the new chapter is loaded
+      if (isAutoAdvancing) {
+        setIsAutoAdvancing(false);
+      }
+    }
+  }, [paragraphs, activeParagraphIndex, showAudioPlayer, isAutoAdvancing]);
 
   // Auto-scroll to active paragraph when it changes
   useEffect(() => {
@@ -166,6 +199,29 @@ const ChapterContentPage: React.FC = () => {
 
   const handleBackToChapters = () => {
     navigate(`/novels/${encodeURIComponent(novelName!)}/chapters`);
+  };
+
+  const handleChapterComplete = () => {
+    // Mark that we're auto-advancing to continue playing
+    setIsAutoAdvancing(true);
+    
+    // When chapter is complete, automatically go to next chapter
+    // The audio player should continue playing from the first paragraph of the next chapter
+    handleNextChapter();
+    
+    // Reset to first paragraph
+    setActiveParagraphIndex(0);
+  };
+
+  const handleAudioSettingsChange = (settings: { playbackSpeed: number; narratorVoice: string; dialogueVoice: string }) => {
+    setAudioSettings(settings);
+  };
+
+  const hasNextChapter = () => {
+    // For now, we assume there could be a next chapter
+    // In a real app, you might want to check against a maximum chapter count
+    // This is a simple heuristic - we assume chapters exist until we hit an error
+    return true;
   };
 
   const handleChapterNavigation = () => {
@@ -502,13 +558,20 @@ const ChapterContentPage: React.FC = () => {
       {showAudioPlayer &&
         paragraphs.length > 0 &&
         activeParagraphIndex !== null && (
-          <div className="px-4 pb-8">
-            <SimpleAudioPlayer
-              paragraphs={paragraphs}
-              currentParagraphIndex={activeParagraphIndex}
-              onParagraphChange={handleParagraphChange}
-            />
-          </div>
+          <AudioPlayer
+            paragraphs={paragraphs}
+            currentParagraphIndex={activeParagraphIndex}
+            onParagraphChange={handleParagraphChange}
+            onClose={() => setShowAudioPlayer(false)}
+            isVisible={showAudioPlayer}
+            onChapterComplete={handleChapterComplete}
+            hasNextChapter={hasNextChapter()}
+            initialPlaybackSpeed={audioSettings.playbackSpeed}
+            initialNarratorVoice={audioSettings.narratorVoice}
+            initialDialogueVoice={audioSettings.dialogueVoice}
+            initialIsPlaying={isAutoAdvancing}
+            onSettingsChange={handleAudioSettingsChange}
+          />
         )}
 
       {/* Show Audio Player Button */}

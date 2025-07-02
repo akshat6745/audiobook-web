@@ -15,7 +15,8 @@ import {
   calculateNextSpeed,
   generateAudioForParagraph,
   updateParagraphInList,
-  MIN_CHARACTERS,
+  cleanupAudioOutsideRange,
+  getParagraphsToLoad,
 } from "../utils/audioPlayerUtils";
 import {
   SkipPrevious,
@@ -23,6 +24,7 @@ import {
   Pause,
   SkipNext,
   Close,
+  Replay,
 } from "@mui/icons-material";
 
 interface AudioPlayerProps {
@@ -31,6 +33,13 @@ interface AudioPlayerProps {
   onParagraphChange: (index: number) => void;
   onClose: () => void;
   isVisible: boolean;
+  onChapterComplete: () => void; // Callback when chapter is finished
+  hasNextChapter: boolean; // Whether there's a next chapter available
+  initialPlaybackSpeed?: number; // Initial playback speed
+  initialNarratorVoice?: string; // Initial narrator voice
+  initialDialogueVoice?: string; // Initial dialogue voice
+  initialIsPlaying?: boolean; // Whether to start in playing state
+  onSettingsChange?: (settings: { playbackSpeed: number; narratorVoice: string; dialogueVoice: string }) => void; // Callback when settings change
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
@@ -39,11 +48,18 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   onParagraphChange,
   onClose,
   isVisible,
+  onChapterComplete,
+  hasNextChapter,
+  initialPlaybackSpeed = SPEED_OPTIONS[2].value,
+  initialNarratorVoice = DEFAULT_NARRATOR_VOICE,
+  initialDialogueVoice = DEFAULT_DIALOGUE_VOICE,
+  initialIsPlaying = false,
+  onSettingsChange,
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState(DEFAULT_NARRATOR_VOICE);
-  const [dialogueVoice, setDialogueVoice] = useState(DEFAULT_DIALOGUE_VOICE);
-  const [playbackSpeed, setPlaybackSpeed] = useState(SPEED_OPTIONS[2].value);
+  const [isPlaying, setIsPlaying] = useState(initialIsPlaying);
+  const [selectedVoice, setSelectedVoice] = useState(initialNarratorVoice);
+  const [dialogueVoice, setDialogueVoice] = useState(initialDialogueVoice);
+  const [playbackSpeed, setPlaybackSpeed] = useState(initialPlaybackSpeed);
   const [enhancedParagraphs, setEnhancedParagraphs] = useState<
     EnhancedParagraph[]
   >([]);
@@ -88,97 +104,86 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     [],
   );
 
-  // Lazy load audio for a specific paragraph
-  const lazyLoadAudio = useCallback(
-    async (index: number) => {
-      if (index < 0) return;
-
-      // Use ref to get the most up-to-date paragraph state
-      const currentParagraph = enhancedParagraphsRef.current[index];
-
-      // Check if already loading or loaded to prevent duplicate calls
-      if (
-        !currentParagraph ||
-        currentParagraph.audioBlob ||
-        currentParagraph.isLoading ||
-        loadingRef.current.has(index)
-      ) {
-        return;
-      }
-
-      // Mark as loading to prevent duplicates
-      loadingRef.current.add(index);
-
-      // Update state to show loading
-      updateParagraph(index, { isLoading: true, errors: null });
-
-      try {
-        const result = await generateAudioForParagraph(
-          currentParagraph,
-          selectedVoice,
-          dialogueVoice,
-        );
-
-        if (result.success && result.audioBlob) {
-          updateParagraph(index, {
-            audioData: null, // We don't store blob URLs anymore
-            audioBlob: result.audioBlob,
-            isLoading: false,
-            errors: null,
-          });
-        } else {
-          updateParagraph(index, {
-            errors: result.error || "Failed to generate audio",
-            isLoading: false,
-          });
+  // Aggressive audio preloading for seamless paragraph changes
+  const preloadAudioRange = useCallback(
+    async (centerIndex: number) => {
+      const paragraphsToLoad = getParagraphsToLoad(enhancedParagraphsRef.current, centerIndex);
+      
+      // Load paragraphs in priority order (current first, then next ones until MIN_CHARACTERS)
+      for (const index of paragraphsToLoad) {
+        if (loadingRef.current.has(index)) {
+          continue; // Skip if already loading
         }
-      } catch (error) {
-        updateParagraph(index, {
-          errors: "Failed to generate audio",
-          isLoading: false,
-        });
-      } finally {
-        // Remove from loading set when done
-        loadingRef.current.delete(index);
+
+        const currentParagraph = enhancedParagraphsRef.current[index];
+        if (!currentParagraph || currentParagraph.audioBlob) {
+          continue; // Skip if doesn't exist or already loaded
+        }
+
+        // Mark as loading to prevent duplicates
+        loadingRef.current.add(index);
+        updateParagraph(index, { isLoading: true, errors: null });
+
+        try {
+          const result = await generateAudioForParagraph(
+            currentParagraph,
+            selectedVoice,
+            dialogueVoice,
+          );
+
+          if (result.success && result.audioBlob && result.audioUrl) {
+            updateParagraph(index, {
+              audioData: null,
+              audioBlob: result.audioBlob,
+              audioUrl: result.audioUrl, // Store the URL for immediate use
+              isLoading: false,
+              errors: null,
+            });
+          } else {
+            updateParagraph(index, {
+              errors: result.error || "Failed to generate audio",
+              isLoading: false,
+            });
+          }
+        } catch (error) {
+          updateParagraph(index, {
+            errors: "Failed to generate audio",
+            isLoading: false,
+          });
+        } finally {
+          loadingRef.current.delete(index);
+        }
       }
+
+      // Clean up audio outside the preload range to save memory
+      setEnhancedParagraphs((prev) => cleanupAudioOutsideRange(prev, centerIndex));
     },
     [selectedVoice, dialogueVoice, updateParagraph],
   );
 
-  // Lazy load audio for current paragraph and preload upcoming ones
+  // Preload audio for current paragraph and adjacent ones
   useEffect(() => {
     if (enhancedParagraphs.length > 0 && currentParagraphIndex >= 0) {
       // Reset audio element when paragraph changes
       if (audioRef.current) {
         audioRef.current.pause();
-        // Revoke the blob URL if it exists
-        if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
-          URL.revokeObjectURL(audioRef.current.src);
-        }
+        // Don't revoke URLs here as we'll reuse them
         audioRef.current.src = "";
-        setIsPlaying(false);
+        // Only set isPlaying to false if we're not in auto-advance mode
+        if (!initialIsPlaying) {
+          setIsPlaying(false);
+        }
       }
 
       // Reset progress tracking
       setCurrentTime(0);
       setDuration(0);
 
-      // Load current paragraph audio immediately
-      lazyLoadAudio(currentParagraphIndex);
-
-      // Preload upcoming paragraphs up to MIN_CHARACTERS
-      let totalCharacters = 0;
-      for (
-        let i = currentParagraphIndex + 1;
-        i < enhancedParagraphs.length && totalCharacters < MIN_CHARACTERS;
-        i++
-      ) {
-        totalCharacters += enhancedParagraphsRef.current[i].text.length;
-        lazyLoadAudio(i);
-      }
+      // Start aggressive preloading centered on current paragraph
+      preloadAudioRange(currentParagraphIndex);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentParagraphIndex, enhancedParagraphs.length, lazyLoadAudio]);
+  }, [currentParagraphIndex, enhancedParagraphs.length, preloadAudioRange]);
 
   // Update playback speed when changed
   useEffect(() => {
@@ -236,10 +241,56 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         setTimeout(() => {
           handlePlay();
         }, 100); // 100ms delay to allow audio element to settle
+      } else if (initialIsPlaying && isPlaying) {
+        // If we should be playing and are marked as playing, but audio isn't actually playing
+        setTimeout(() => {
+          handlePlay();
+        }, 100);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enhancedParagraphs, currentParagraphIndex, playbackSpeed]);
+
+  const loadAndPlayAudio = useCallback(async (paragraph: EnhancedParagraph) => {
+    if (!audioRef.current) {
+      return;
+    }
+
+    const audio = audioRef.current;
+
+    try {
+      // Use the stored URL if available, otherwise create a new one
+      let audioUrl = paragraph.audioUrl;
+      if (!audioUrl && paragraph.audioBlob) {
+        audioUrl = URL.createObjectURL(paragraph.audioBlob);
+        // Update the paragraph with the new URL for future use
+        const paragraphIndex = enhancedParagraphs.findIndex(p => p.paragraphNumber === paragraph.paragraphNumber);
+        if (paragraphIndex >= 0) {
+          updateParagraph(paragraphIndex, { audioUrl });
+        }
+      }
+
+      if (!audioUrl) {
+        throw new Error("No audio available");
+      }
+
+      // Only change source if it's different to avoid unnecessary loading
+      if (audio.src !== audioUrl) {
+        audio.src = audioUrl;
+        audio.load();
+      }
+      
+      audio.playbackRate = playbackSpeed;
+      await audio.play();
+      setIsPlaying(true);
+    } catch (err) {
+      console.error("Failed to play audio:", err);
+      updateParagraph(currentParagraphIndex, {
+        errors: "Failed to play audio. Please try again.",
+      });
+      setIsPlaying(false);
+    }
+  }, [playbackSpeed, currentParagraphIndex, updateParagraph, enhancedParagraphs]);
 
   const handlePlay = async () => {
     const currentParagraph = enhancedParagraphs[currentParagraphIndex];
@@ -247,117 +298,23 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       return;
     }
 
-    // If audio blob is not available yet, just return (audio should be loading from useEffect)
-    if (!currentParagraph.audioBlob) {
-      return;
+    // If audio is loaded and paused, just resume playing
+    if (audioRef.current.src && audioRef.current.paused && !isPlaying) {
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+        return;
+      } catch (error) {
+        console.error("Failed to resume playback, will try reloading.", error);
+        // Fallback to reloading if resume fails
+      }
     }
 
-    try {
-      const audio = audioRef.current;
-      
-      // Ensure audio element is in a clean state before loading new audio
-      if (audio.src && audio.src.startsWith('blob:')) {
-        URL.revokeObjectURL(audio.src);
-      }
-      audio.src = "";
-      audio.currentTime = 0;
-      
-      // Wait a tick to ensure the audio element has processed the reset
-      await new Promise(resolve => setTimeout(resolve, 0));
-      
-      // Create a fresh blob URL from the stored blob to ensure it's valid
-      if (currentParagraph.audioBlob) {
-        // Create a new blob URL from the stored blob
-        const freshBlobUrl = URL.createObjectURL(currentParagraph.audioBlob);
-        
-        audio.src = freshBlobUrl;
-        
-        // Set playback speed BEFORE loading to prevent race conditions
-        audio.playbackRate = playbackSpeed;
-        
-        // Wait for the audio to be ready to play
-        await new Promise<void>((resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            audio.removeEventListener('canplay', handleCanPlay);
-            audio.removeEventListener('error', handleError);
-            audio.removeEventListener('loadeddata', handleLoadedData);
-            reject(new Error('Audio loading timeout'));
-          }, 5000); // 5 second timeout
-          
-          const handleCanPlay = () => {
-            clearTimeout(timeoutId);
-            audio.removeEventListener('canplay', handleCanPlay);
-            audio.removeEventListener('error', handleError);
-            audio.removeEventListener('loadeddata', handleLoadedData);
-            resolve();
-          };
-          
-          const handleLoadedData = () => {
-            clearTimeout(timeoutId);
-            audio.removeEventListener('canplay', handleCanPlay);
-            audio.removeEventListener('error', handleError);
-            audio.removeEventListener('loadeddata', handleLoadedData);
-            resolve();
-          };
-          
-          const handleError = (event: Event) => {
-            clearTimeout(timeoutId);
-            console.error("Audio loading error:", event);
-            audio.removeEventListener('canplay', handleCanPlay);
-            audio.removeEventListener('error', handleError);
-            audio.removeEventListener('loadeddata', handleLoadedData);
-            
-            // Clean up the blob URL that failed to load
-            if (audio.src && audio.src.startsWith('blob:')) {
-              URL.revokeObjectURL(audio.src);
-              audio.src = "";
-            }
-            
-            reject(new Error('Audio failed to load'));
-          };
-          
-          // If audio is already ready, resolve immediately
-          if (audio.readyState >= 2) { // HAVE_CURRENT_DATA or better
-            clearTimeout(timeoutId);
-            resolve();
-            return;
-          }
-          
-          audio.addEventListener('canplay', handleCanPlay);
-          audio.addEventListener('loadeddata', handleLoadedData);
-          audio.addEventListener('error', handleError);
-          
-          // Load the audio
-          try {
-            audio.load();
-          } catch (loadError) {
-            clearTimeout(timeoutId);
-            audio.removeEventListener('canplay', handleCanPlay);
-            audio.removeEventListener('error', handleError);
-            audio.removeEventListener('loadeddata', handleLoadedData);
-            reject(loadError);
-          }
-        });
-      }
-
-      // Ensure playback speed is still correct (in case it changed during loading)
-      if (audio.playbackRate !== playbackSpeed) {
-        audio.playbackRate = playbackSpeed;
-      }
-      
-      await audio.play();
-      setIsPlaying(true);
-    } catch (err) {
-      console.error("Failed to play audio:", err);
-      // Don't show error to user for loading errors during paragraph changes
-      // as they're usually transient and resolve on retry
-      if (err instanceof Error && err.message.includes('Audio failed to load')) {
-        console.warn("Audio loading failed during paragraph change - this is usually transient");
-      } else {
-        updateParagraph(currentParagraphIndex, {
-          errors: "Failed to play audio. Please try again.",
-        });
-      }
+    if (currentParagraph.audioBlob) {
+      loadAndPlayAudio(currentParagraph);
+    } else {
+      // Audio is not loaded yet, trigger preloading for current range
+      preloadAudioRange(currentParagraphIndex);
     }
   };
 
@@ -369,16 +326,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const handlePrevious = () => {
     if (currentParagraphIndex > 0) {
       if (audioRef.current) {
-        // Pause first to prevent the browser from trying to continue loading
+        // Pause and reset position, but keep the source for potential reuse
         audioRef.current.pause();
-        
-        // Clean up immediately and synchronously to prevent race conditions
-        if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
-          URL.revokeObjectURL(audioRef.current.src);
-        }
-        audioRef.current.src = "";
-        
-        // Reset audio element state
         audioRef.current.currentTime = 0;
         audioRef.current.playbackRate = playbackSpeed;
       }
@@ -393,16 +342,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     if (currentParagraphIndex < enhancedParagraphs.length - 1) {
       const wasPlaying = isPlaying;
       if (audioRef.current) {
-        // Pause first to prevent the browser from trying to continue loading
+        // Pause and reset position, but keep the source for potential reuse
         audioRef.current.pause();
-        
-        // Clean up immediately and synchronously to prevent race conditions
-        if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
-          URL.revokeObjectURL(audioRef.current.src);
-        }
-        audioRef.current.src = "";
-        
-        // Reset audio element state
         audioRef.current.currentTime = 0;
         audioRef.current.playbackRate = playbackSpeed;
       }
@@ -423,15 +364,22 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     }
   };
 
+  const handleReplay = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      setCurrentTime(0);
+      
+      if (!isPlaying) {
+        handlePlay();
+      }
+    }
+  };
+
   const handleVoiceChange = (voice: string) => {
     setSelectedVoice(voice);
     if (audioRef.current) {
       audioRef.current.pause();
-      // Revoke the blob URL if it exists
-      if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
-        URL.revokeObjectURL(audioRef.current.src);
-      }
-      audioRef.current.src = "";
+      audioRef.current.src = ""; // Clear source to prevent stale audio
     }
     setIsPlaying(false);
     setCurrentTime(0);
@@ -439,17 +387,22 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     // Clear loading tracking and audio data for all paragraphs so they regenerate with new voice
     loadingRef.current.clear();
     setEnhancedParagraphs((prev) => clearAudioDataForVoiceChange(prev));
+    
+    // Notify parent of settings change
+    if (onSettingsChange) {
+      onSettingsChange({
+        playbackSpeed,
+        narratorVoice: voice,
+        dialogueVoice
+      });
+    }
   };
 
   const handleDialogueVoiceChange = (voice: string) => {
     setDialogueVoice(voice);
     if (audioRef.current) {
       audioRef.current.pause();
-      // Revoke the blob URL if it exists
-      if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
-        URL.revokeObjectURL(audioRef.current.src);
-      }
-      audioRef.current.src = "";
+      audioRef.current.src = ""; // Clear source to prevent stale audio
     }
     setIsPlaying(false);
     setCurrentTime(0);
@@ -457,10 +410,29 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     // Clear loading tracking and audio data for all paragraphs so they regenerate with new voice
     loadingRef.current.clear();
     setEnhancedParagraphs((prev) => clearAudioDataForVoiceChange(prev));
+    
+    // Notify parent of settings change
+    if (onSettingsChange) {
+      onSettingsChange({
+        playbackSpeed,
+        narratorVoice: selectedVoice,
+        dialogueVoice: voice
+      });
+    }
   };
 
   const handleSpeedClick = () => {
-    setPlaybackSpeed(calculateNextSpeed(playbackSpeed));
+    const newSpeed = calculateNextSpeed(playbackSpeed);
+    setPlaybackSpeed(newSpeed);
+    
+    // Notify parent of settings change
+    if (onSettingsChange) {
+      onSettingsChange({
+        playbackSpeed: newSpeed,
+        narratorVoice: selectedVoice,
+        dialogueVoice
+      });
+    }
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -492,12 +464,15 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     <div className="fixed inset-0 pointer-events-none z-50">
       <Draggable
         handle=".drag-handle"
-        defaultPosition={{ x: 20, y: 100 }}
+        defaultPosition={{ 
+          x: Math.max(20, (typeof window !== 'undefined' ? window.innerWidth : 1200) - 450), 
+          y: Math.max(20, (typeof window !== 'undefined' ? window.innerHeight : 800) - 250) 
+        }}
         nodeRef={nodeRef}
       >
         <div
           ref={nodeRef}
-          className="absolute bg-gradient-to-br from-slate-800/95 to-slate-900/95 border-2 border-primary-500/30 rounded-xl shadow-2xl shadow-primary-500/20 z-50 pointer-events-auto transition-all duration-300 backdrop-blur-xl w-80 hover:shadow-primary-500/30 hover:border-primary-500/50"
+          className="absolute bg-gradient-to-br from-slate-800/95 to-slate-900/95 border-2 border-primary-500/30 rounded-xl shadow-2xl shadow-primary-500/20 z-50 pointer-events-auto transition-all duration-300 backdrop-blur-xl w-96 hover:shadow-primary-500/30 hover:border-primary-500/50"
         >
           {/* Compact Header with Controls */}
           <div
@@ -522,6 +497,16 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 ) : (
                   <PlayArrow className="w-4 h-4" />
                 )}
+              </button>
+
+              {/* Replay Button */}
+              <button
+                onClick={handleReplay}
+                disabled={isCurrentLoading || !currentParagraph?.audioBlob}
+                className="w-7 h-7 bg-orange-500/80 hover:bg-orange-600/80 rounded-lg text-orange-100 disabled:opacity-40 disabled:cursor-not-allowed hover:text-white transition-all flex items-center justify-center border border-orange-400/50 hover:border-orange-300/70"
+                title="Replay current paragraph"
+              >
+                <Replay className="w-4 h-4" />
               </button>
 
               {/* Previous/Next */}
@@ -704,13 +689,22 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
               
               // Auto-advance to next paragraph when current one finishes
               if (currentParagraphIndex < enhancedParagraphs.length - 1) {
-                // Let handleNext() handle the cleanup to avoid race conditions
+                // Let handleNext() handle the transition efficiently
                 handleNext();
               } else {
-                // Only clean up if we're at the last paragraph and won't call handleNext
-                if (audioRef.current?.src && audioRef.current.src.startsWith('blob:')) {
-                  URL.revokeObjectURL(audioRef.current.src);
+                // We're at the last paragraph of the current chapter
+                // Clear the audio source but don't revoke the URL (it's managed by our cleanup system)
+                if (audioRef.current) {
                   audioRef.current.src = "";
+                }
+                
+                // If there's a next chapter and callback is provided, trigger chapter change
+                if (hasNextChapter && onChapterComplete) {
+                  onChapterComplete();
+                } else {
+                  // No more chapters, just stop playback
+                  setIsPlaying(false);
+                  console.log("Audiobook finished - no more chapters");
                 }
               }
             }}

@@ -111,12 +111,17 @@ const ChapterContentPage: React.FC = () => {
 
   // Handle auto-play when new chapter loads after chapter completion
   useEffect(() => {
-    if (paragraphs.length > 0 && activeParagraphIndex === 0 && showAudioPlayer && isAutoAdvancing) {
+    if (
+      paragraphs.length > 0 &&
+      activeParagraphIndex === 0 &&
+      showAudioPlayer &&
+      isAutoAdvancing
+    ) {
       // Delay resetting auto-advancing state to allow AudioPlayer to initialize properly
       const timeoutId = setTimeout(() => {
         setIsAutoAdvancing(false);
       }, 500); // Give AudioPlayer time to initialize with initialIsPlaying={true}
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [paragraphs, activeParagraphIndex, showAudioPlayer, isAutoAdvancing]);
@@ -126,27 +131,29 @@ const ChapterContentPage: React.FC = () => {
     if (activeParagraphIndex !== null && showAudioPlayer) {
       const scrollToActiveParagraph = () => {
         setIsAutoScrolling(true);
-        
+
         // Use querySelector to find the paragraph element
-        const paragraphElement = document.querySelector(`[data-paragraph-index="${activeParagraphIndex}"]`) as HTMLElement;
-        
+        const paragraphElement = document.querySelector(
+          `[data-paragraph-index="${activeParagraphIndex}"]`
+        ) as HTMLElement;
+
         if (paragraphElement) {
           // Calculate the offset to center the paragraph in the viewport
           const rect = paragraphElement.getBoundingClientRect();
           const windowHeight = window.innerHeight;
           const elementHeight = rect.height;
-          
+
           // Calculate the desired scroll position to center the element
           const offsetTop = paragraphElement.offsetTop;
           const centerOffset = windowHeight / 2 - elementHeight / 2;
           const scrollToPosition = offsetTop - centerOffset;
-          
+
           // Smooth scroll to the paragraph
           window.scrollTo({
             top: Math.max(0, scrollToPosition), // Ensure we don't scroll above the page
-            behavior: 'smooth'
+            behavior: "smooth",
           });
-          
+
           // Reset auto-scrolling state after animation completes
           setTimeout(() => setIsAutoScrolling(false), 1000);
         } else {
@@ -156,7 +163,7 @@ const ChapterContentPage: React.FC = () => {
 
       // Add a small delay to ensure the paragraph is rendered and styled
       const timeoutId = setTimeout(scrollToActiveParagraph, 300);
-      
+
       return () => {
         clearTimeout(timeoutId);
         setIsAutoScrolling(false);
@@ -194,16 +201,20 @@ const ChapterContentPage: React.FC = () => {
   const handleChapterComplete = () => {
     // Mark that we're auto-advancing to continue playing
     setIsAutoAdvancing(true);
-    
+
     // When chapter is complete, automatically go to next chapter
     // The audio player should continue playing from the first paragraph of the next chapter
     handleNextChapter();
-    
+
     // Reset to first paragraph
     setActiveParagraphIndex(0);
   };
 
-  const handleAudioSettingsChange = (settings: { playbackSpeed: number; narratorVoice: string; dialogueVoice: string }) => {
+  const handleAudioSettingsChange = (settings: {
+    playbackSpeed: number;
+    narratorVoice: string;
+    dialogueVoice: string;
+  }) => {
     setAudioSettings(settings);
   };
 

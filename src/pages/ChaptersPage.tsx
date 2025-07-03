@@ -36,13 +36,13 @@ const ChaptersPage: React.FC = () => {
         setError(null);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to load chapters",
+          err instanceof Error ? err.message : "Failed to load chapters"
         );
       } finally {
         setLoading(false);
       }
     },
-    [novelName],
+    [novelName]
   );
 
   const loadUserProgress = useCallback(async () => {
@@ -53,7 +53,7 @@ const ChaptersPage: React.FC = () => {
       try {
         const progressData = await fetchUserProgressForNovel(
           username,
-          decodeURIComponent(novelName),
+          decodeURIComponent(novelName)
         );
         setUserProgress(progressData.lastChapterRead);
       } catch (err) {
@@ -77,7 +77,7 @@ const ChaptersPage: React.FC = () => {
         await saveUserProgress(
           username,
           decodeURIComponent(novelName),
-          chapter.chapterNumber,
+          chapter.chapterNumber
         );
         setUserProgress(chapter.chapterNumber);
       } catch (err) {

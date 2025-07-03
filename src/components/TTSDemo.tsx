@@ -4,7 +4,7 @@ import { NARRATOR_VOICES, DIALOGUE_VOICES } from "../utils/config";
 
 const TTSDemo: React.FC = () => {
   const [text, setText] = useState(
-    'The wizard raised his staff and stepped forward. "You shall not pass!" he declared with authority. The ground trembled beneath his feet as magical energy coursed through the ancient weapon.',
+    'The wizard raised his staff and stepped forward. "You shall not pass!" he declared with authority. The ground trembled beneath his feet as magical energy coursed through the ancient weapon.'
   );
   const [narratorVoice, setNarratorVoice] = useState("en-US-ChristopherNeural");
   const [dialogueVoice, setDialogueVoice] = useState("en-US-AriaNeural");
@@ -26,7 +26,7 @@ const TTSDemo: React.FC = () => {
       const result = await TTSService.generateDualVoiceTTS(
         text,
         narratorVoice,
-        dialogueVoice,
+        dialogueVoice
       );
 
       if (result.success && result.audioUrl) {
@@ -44,7 +44,7 @@ const TTSDemo: React.FC = () => {
   const selectSamplePair = (
     narrator: string,
     dialogue: string,
-    sampleText: string,
+    sampleText: string
   ) => {
     setNarratorVoice(narrator);
     setDialogueVoice(dialogue);

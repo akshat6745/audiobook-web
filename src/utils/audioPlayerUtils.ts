@@ -5,7 +5,7 @@ export const MIN_CHARACTERS = 1500;
 export const PRELOAD_BEHIND_COUNT = 0; // Don't preload previous paragraphs
 
 export const initializeEnhancedParagraphs = (
-  paragraphs: Paragraph[],
+  paragraphs: Paragraph[]
 ): EnhancedParagraph[] => {
   return paragraphs.map((paragraph, index) => ({
     paragraphNumber: index + 1,
@@ -27,7 +27,7 @@ export const cleanupAudioUrls = (paragraphs: EnhancedParagraph[]): void => {
 };
 
 export const clearAudioDataForVoiceChange = (
-  paragraphs: EnhancedParagraph[],
+  paragraphs: EnhancedParagraph[]
 ): EnhancedParagraph[] => {
   return paragraphs.map((p) => {
     // Clean up existing blob URL
@@ -53,7 +53,7 @@ export const calculateNextSpeed = (currentSpeed: number): number => {
 export const generateAudioForParagraph = async (
   paragraph: EnhancedParagraph,
   narratorVoice: string,
-  dialogueVoice: string,
+  dialogueVoice: string
 ): Promise<{
   success: boolean;
   audioUrl?: string;
@@ -70,7 +70,7 @@ export const generateAudioForParagraph = async (
     const result = await TTSService.generateDualVoiceTTS(
       paragraph.text,
       narratorVoice,
-      dialogueVoice,
+      dialogueVoice
     );
 
     console.log("result from TTS service:", result);
@@ -79,7 +79,7 @@ export const generateAudioForParagraph = async (
       // Create a persistent blob URL that will be stored in the paragraph
       const audioUrl = URL.createObjectURL(result.audioBlob);
       console.log("Audio generated successfully, created blob URL:", audioUrl);
-      
+
       return {
         success: true,
         audioUrl: audioUrl,
@@ -100,7 +100,7 @@ export const generateAudioForParagraph = async (
 export const updateParagraphInList = (
   paragraphs: EnhancedParagraph[],
   index: number,
-  updates: Partial<EnhancedParagraph>,
+  updates: Partial<EnhancedParagraph>
 ): EnhancedParagraph[] => {
   return paragraphs.map((p, i) => (i === index ? { ...p, ...updates } : p));
 };
@@ -112,20 +112,24 @@ export const updateParagraphInList = (
 export const getPreloadRange = (
   currentIndex: number,
   totalParagraphs: number,
-  paragraphs: EnhancedParagraph[],
+  paragraphs: EnhancedParagraph[]
 ): { start: number; end: number } => {
   const start = currentIndex; // Start from current paragraph, no previous ones
   let end = currentIndex;
   let totalCharacters = 0;
-  
+
   // Add characters from current and future paragraphs until we reach MIN_CHARACTERS
-  for (let i = currentIndex; i < totalParagraphs && totalCharacters < MIN_CHARACTERS; i++) {
+  for (
+    let i = currentIndex;
+    i < totalParagraphs && totalCharacters < MIN_CHARACTERS;
+    i++
+  ) {
     if (paragraphs[i]) {
       totalCharacters += paragraphs[i].text.length;
       end = i;
     }
   }
-  
+
   return { start, end };
 };
 
@@ -134,21 +138,25 @@ export const getPreloadRange = (
  */
 export const cleanupAudioOutsideRange = (
   paragraphs: EnhancedParagraph[],
-  currentIndex: number,
+  currentIndex: number
 ): EnhancedParagraph[] => {
-  const { start, end } = getPreloadRange(currentIndex, paragraphs.length, paragraphs);
-  
+  const { start, end } = getPreloadRange(
+    currentIndex,
+    paragraphs.length,
+    paragraphs
+  );
+
   return paragraphs.map((p, index) => {
     // Keep audio for paragraphs in the preload range
     if (index >= start && index <= end) {
       return p;
     }
-    
+
     // Clean up audio for paragraphs outside the range
     if (p.audioUrl) {
       URL.revokeObjectURL(p.audioUrl);
     }
-    
+
     return {
       ...p,
       audioUrl: undefined,
@@ -164,24 +172,28 @@ export const cleanupAudioOutsideRange = (
  */
 export const getParagraphsToLoad = (
   paragraphs: EnhancedParagraph[],
-  currentIndex: number,
+  currentIndex: number
 ): number[] => {
-  const { start, end } = getPreloadRange(currentIndex, paragraphs.length, paragraphs);
+  const { start, end } = getPreloadRange(
+    currentIndex,
+    paragraphs.length,
+    paragraphs
+  );
   const toLoad: number[] = [];
-  
+
   for (let i = start; i <= end; i++) {
     const paragraph = paragraphs[i];
     if (paragraph && !paragraph.audioBlob && !paragraph.isLoading) {
       toLoad.push(i);
     }
   }
-  
+
   // Prioritize current paragraph, then adjacent ones
   toLoad.sort((a, b) => {
     const aDist = Math.abs(a - currentIndex);
     const bDist = Math.abs(b - currentIndex);
     return aDist - bDist;
   });
-  
+
   return toLoad;
 };

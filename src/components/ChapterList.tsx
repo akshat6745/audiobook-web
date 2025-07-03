@@ -114,7 +114,9 @@ const ChapterList: React.FC<ChapterListProps> = ({
     };
 
     return (
-      <div className={`flex items-center justify-between ${showGotoButton ? 'mb-8' : 'mt-10'}`}>
+      <div
+        className={`flex items-center justify-between ${showGotoButton ? "mb-8" : "mt-10"}`}
+      >
         <div className="flex items-center space-x-3">
           <button
             onClick={() => onPageChange(currentPage - 1)}
@@ -167,7 +169,9 @@ const ChapterList: React.FC<ChapterListProps> = ({
 
         {showGotoButton && (
           <div className="flex items-center space-x-3">
-            <span className="text-sm font-medium text-slate-400">Go to page:</span>
+            <span className="text-sm font-medium text-slate-400">
+              Go to page:
+            </span>
             <div className="flex items-center gap-2 px-3 py-2 glass-dark rounded-lg border border-primary-500/30">
               <input
                 type="number"
@@ -282,7 +286,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
         <div className="space-y-3">
           {chapters.slice(1).map((chapter, index) => {
             const { title, publishedTime } = parseChapterTitle(
-              chapter.chapterTitle,
+              chapter.chapterTitle
             );
             const isRead =
               userProgress && chapter.chapterNumber <= userProgress;

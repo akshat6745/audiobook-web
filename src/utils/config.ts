@@ -225,7 +225,7 @@ export const parseChapterTitle = (title: string) => {
 
   // Fallback to original regex pattern for single-line titles
   const match = title.match(
-    /^(?:Chapter\s+)?(\d+)(?:\s*[-:]?\s*(.+?))?(?:\s*\((.+?)\))?$/i,
+    /^(?:Chapter\s+)?(\d+)(?:\s*[-:]?\s*(.+?))?(?:\s*\((.+?)\))?$/i
   );
 
   if (match) {
@@ -264,7 +264,7 @@ export const parseNovelName = (novelName: string): string => {
 // Helper function to format chapter display
 export const formatChapterTitle = (
   chapterNumber: number,
-  title?: string,
+  title?: string
 ): string => {
   if (title && title !== `Chapter ${chapterNumber}`) {
     return `Chapter ${chapterNumber}: ${title}`;

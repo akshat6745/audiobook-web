@@ -12,7 +12,7 @@ export class TTSService {
   static async generateDualVoiceTTS(
     text: string,
     narratorVoice: string = "en-US-ChristopherNeural",
-    dialogueVoice: string = "en-US-AriaNeural",
+    dialogueVoice: string = "en-US-AriaNeural"
   ): Promise<{
     success: boolean;
     audioUrl?: string;
@@ -43,7 +43,7 @@ export class TTSService {
         "Size:",
         audioBlob.size,
         "Type:",
-        audioBlob.type,
+        audioBlob.type
       );
 
       return { success: true, audioUrl, audioBlob };
@@ -66,14 +66,14 @@ export class TTSService {
     novelName: string,
     chapterNumber: number,
     narratorVoice: string = "en-US-ChristopherNeural",
-    dialogueVoice: string = "en-US-AriaNeural",
+    dialogueVoice: string = "en-US-AriaNeural"
   ): Promise<{ success: boolean; audioUrl?: string; error?: string }> {
     try {
       const audioBlob = await generateChapterAudio(
         novelName,
         chapterNumber,
         narratorVoice,
-        dialogueVoice,
+        dialogueVoice
       );
 
       const audioUrl = URL.createObjectURL(audioBlob);

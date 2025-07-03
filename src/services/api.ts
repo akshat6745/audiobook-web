@@ -47,23 +47,23 @@ export const uploadEpub = async (file: File): Promise<ApiResponse> => {
 // Chapter Management
 export const fetchChapters = async (
   novelName: string,
-  page: number = 1,
+  page: number = 1
 ): Promise<PaginatedChapters> => {
   const encodedNovelName = encodeURIComponent(novelName);
   const response = await api.get(
-    `/chapters-with-pages/${encodedNovelName}?page=${page}`,
+    `/chapters-with-pages/${encodedNovelName}?page=${page}`
   );
   return response.data;
 };
 
 export const fetchChapterContent = async (
   novelName: string,
-  chapterNumber: number,
+  chapterNumber: number
 ): Promise<ChapterContent> => {
   try {
     const encodedNovelName = encodeURIComponent(novelName);
     const response = await api.get(
-      `/chapter?chapterNumber=${chapterNumber}&novelName=${encodedNovelName}`,
+      `/chapter?chapterNumber=${chapterNumber}&novelName=${encodedNovelName}`
     );
     return response.data;
   } catch (error) {
@@ -101,7 +101,7 @@ export const generateTts = async (ttsRequest: TtsRequest): Promise<Blob> => {
 
 // Text-to-Speech with Dual Voices
 export const generateDualVoiceTts = async (
-  ttsRequest: DualVoiceTtsRequest,
+  ttsRequest: DualVoiceTtsRequest
 ): Promise<Blob> => {
   try {
     const response = await api.post("/tts-dual-voice", ttsRequest, {
@@ -118,7 +118,7 @@ export const generateDualVoiceTts = async (
       "Received TTS blob:",
       response.data.size,
       "bytes, type:",
-      response.data.type,
+      response.data.type
     );
     return response.data;
   } catch (error) {
@@ -132,7 +132,7 @@ export const generateChapterAudio = async (
   novelName: string,
   chapterNumber: number,
   narratorVoice: string,
-  dialogueVoice: string,
+  dialogueVoice: string
 ): Promise<Blob> => {
   const params = new URLSearchParams({
     novelName,
@@ -156,7 +156,7 @@ export const getTtsStreamUrl = (text: string, voice: string): string => {
 // User Management
 export const loginUser = async (
   username: string,
-  password: string,
+  password: string
 ): Promise<ApiResponse> => {
   const response = await api.post("/userLogin", { username, password });
   return response.data;
@@ -164,7 +164,7 @@ export const loginUser = async (
 
 export const registerUser = async (
   username: string,
-  password: string,
+  password: string
 ): Promise<ApiResponse> => {
   const response = await api.post("/register", { username, password });
   return response.data;
@@ -173,7 +173,7 @@ export const registerUser = async (
 export const saveUserProgress = async (
   username: string,
   novelName: string,
-  lastChapterRead: number,
+  lastChapterRead: number
 ): Promise<ApiResponse> => {
   const response = await api.post("/user/progress", {
     username,
@@ -184,22 +184,22 @@ export const saveUserProgress = async (
 };
 
 export const fetchAllUserProgress = async (
-  username: string,
+  username: string
 ): Promise<UserProgress> => {
   const response = await api.get(
-    `/user/progress?username=${encodeURIComponent(username)}`,
+    `/user/progress?username=${encodeURIComponent(username)}`
   );
   return response.data;
 };
 
 export const fetchUserProgressForNovel = async (
   username: string,
-  novelName: string,
+  novelName: string
 ): Promise<ReadingProgress> => {
   const encodedNovelName = encodeURIComponent(novelName);
   const encodedUsername = encodeURIComponent(username);
   const response = await api.get(
-    `/user/progress/${encodedNovelName}?username=${encodedUsername}`,
+    `/user/progress/${encodedNovelName}?username=${encodedUsername}`
   );
   return response.data;
 };
@@ -212,7 +212,7 @@ api.interceptors.response.use(
       throw new Error(error.response.data.detail);
     }
     throw error;
-  },
+  }
 );
 
 export default api;

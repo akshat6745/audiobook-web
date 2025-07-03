@@ -241,8 +241,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         setTimeout(() => {
           handlePlay();
         }, 100); // 100ms delay to allow audio element to settle
-      } else if (initialIsPlaying && isPlaying) {
-        // If we should be playing and are marked as playing, but audio isn't actually playing
+      } else if (initialIsPlaying && !isPlaying) {
+        // If we should be playing (e.g., after chapter change) but aren't currently playing
         setTimeout(() => {
           handlePlay();
         }, 100);

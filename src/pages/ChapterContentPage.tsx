@@ -111,23 +111,13 @@ const ChapterContentPage: React.FC = () => {
 
   // Handle auto-play when new chapter loads after chapter completion
   useEffect(() => {
-    if (paragraphs.length > 0 && activeParagraphIndex === 0 && showAudioPlayer) {
-      // Check if this is an auto-chapter-advance scenario
-      const playButton = document.querySelector('[data-testid="play-button"]');
-      if (playButton && playButton.hasAttribute("data-auto-play")) {
-        // Small delay to ensure AudioPlayer is ready
-        setTimeout(() => {
-          if (playButton.hasAttribute("data-auto-play")) {
-            playButton.removeAttribute("data-auto-play");
-            // The AudioPlayer's auto-play logic will handle the actual playback
-          }
-        }, 200);
-      }
-      
-      // Reset auto-advancing state once the new chapter is loaded
-      if (isAutoAdvancing) {
+    if (paragraphs.length > 0 && activeParagraphIndex === 0 && showAudioPlayer && isAutoAdvancing) {
+      // Delay resetting auto-advancing state to allow AudioPlayer to initialize properly
+      const timeoutId = setTimeout(() => {
         setIsAutoAdvancing(false);
-      }
+      }, 500); // Give AudioPlayer time to initialize with initialIsPlaying={true}
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [paragraphs, activeParagraphIndex, showAudioPlayer, isAutoAdvancing]);
 

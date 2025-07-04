@@ -11,6 +11,9 @@ interface ChapterContentProps {
   chapterTitle?: string;
   chapterNumber?: number;
   timestamp?: string;
+  isLastChapter?: boolean;
+  lastChapterNumber?: number | null;
+  novelName?: string;
 }
 
 const ChapterContent: React.FC<ChapterContentProps> = ({
@@ -21,6 +24,9 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
   chapterTitle,
   chapterNumber,
   timestamp = "3 years ago",
+  isLastChapter = false,
+  lastChapterNumber = null,
+  novelName,
 }) => {
   if (isLoading) {
     return (
@@ -204,6 +210,72 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
           )}
         </div>
       </div>
+
+      {/* Congratulations Message for Last Chapter */}
+      {isLastChapter && lastChapterNumber === chapterNumber && (
+        <div
+          className="mt-12 text-center animate-fade-in-up"
+          style={{ animationDelay: `${paragraphs.length * 0.1 + 1}s` }}
+        >
+          <div className="glass-dark p-8 rounded-2xl border border-gradient-to-r from-amber-400/30 to-amber-600/30 shadow-glow-lg bg-gradient-to-br from-amber-400/5 to-amber-600/5">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-glow-lg animate-float">
+              <svg
+                className="w-10 h-10 text-white"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+            </div>
+            
+            <h2 className="text-3xl font-bold text-gradient mb-4">
+              🎉 Congratulations! 🎉
+            </h2>
+            
+            <p className="text-xl text-white mb-4">
+              You've completed the entire story!
+            </p>
+            
+            <div className="bg-slate-800/50 rounded-xl p-4 mb-6">
+              <p className="text-amber-300 font-semibold text-lg mb-2">
+                {novelName ? `"${novelName}"` : "This amazing journey"}
+              </p>
+              <p className="text-slate-300">
+                {lastChapterNumber} chapters • Complete
+              </p>
+            </div>
+            
+            <p className="text-slate-400 mb-6 leading-relaxed">
+              Thank you for reading along! You've just finished an incredible story. 
+              Every chapter you read brought you closer to this moment.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 text-emerald-300 rounded-full text-sm font-medium">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg>
+                <span>Story Complete</span>
+              </div>
+              
+              <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/20 text-amber-300 rounded-full text-sm font-medium">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+                <span>Final Chapter</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

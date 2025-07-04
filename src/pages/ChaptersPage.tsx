@@ -68,6 +68,25 @@ const ChaptersPage: React.FC = () => {
     loadUserProgress();
   }, [loadChapters, loadUserProgress]);
 
+  const getLastChapterNumber = useCallback(async (): Promise<number> => {
+    if (!novelName) return 1;
+    
+    try {
+      // If we're on the last page, find the highest chapter number
+      if (currentPage === chaptersData.total_pages) {
+        return Math.max(...chaptersData.chapters.map(ch => ch.chapterNumber));
+      }
+      
+      // If not on last page, fetch the last page to get the highest chapter number
+      const lastPageData = await fetchChapters(decodeURIComponent(novelName), chaptersData.total_pages);
+      return Math.max(...lastPageData.chapters.map(ch => ch.chapterNumber));
+    } catch (err) {
+      console.error("Failed to get last chapter number:", err);
+      // Fallback: return highest from current chapters
+      return Math.max(...chaptersData.chapters.map(ch => ch.chapterNumber));
+    }
+  }, [novelName, currentPage, chaptersData]);
+
   const handleChapterClick = async (chapter: Chapter) => {
     if (!novelName) return;
 
@@ -85,8 +104,15 @@ const ChaptersPage: React.FC = () => {
       }
     }
 
+    // Get the last chapter number to pass along
+    const lastChapterNumber = await getLastChapterNumber();
+
     navigate(`/novels/${novelName}/chapters/${chapter.chapterNumber}`, {
-      state: { chapterTitle: chapter.chapterTitle },
+      state: { 
+        chapterTitle: chapter.chapterTitle,
+        lastChapterNumber: lastChapterNumber,
+        isLastChapter: chapter.chapterNumber === lastChapterNumber
+      },
     });
   };
 
@@ -261,9 +287,15 @@ const ChaptersPage: React.FC = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() =>
-                    navigate(`/novels/${novelName}/chapters/${userProgress}`)
-                  }
+                  onClick={async () => {
+                    const lastChapterNumber = await getLastChapterNumber();
+                    navigate(`/novels/${novelName}/chapters/${userProgress}`, {
+                      state: { 
+                        lastChapterNumber: lastChapterNumber,
+                        isLastChapter: userProgress === lastChapterNumber
+                      }
+                    });
+                  }}
                   className="btn-modern bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-glow hover:shadow-glow-lg transition-all duration-300 focus-ring"
                 >
                   <span className="flex items-center space-x-2">

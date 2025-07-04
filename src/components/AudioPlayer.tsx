@@ -178,10 +178,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         audioRef.current.pause();
         // Don't revoke URLs here as we'll reuse them
         audioRef.current.src = "";
-        // Only set isPlaying to false if we're not in auto-advance mode
-        if (!initialIsPlaying) {
-          setIsPlaying(false);
-        }
       }
 
       // Reset progress tracking
@@ -246,20 +242,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       const playButton = document.querySelector('[data-auto-play="true"]');
       if (playButton) {
         playButton.removeAttribute("data-auto-play");
-
-        // Add a small delay to ensure audio element is ready after paragraph change
-        setTimeout(() => {
-          handlePlay();
-        }, 100); // 100ms delay to allow audio element to settle
-      } else if (initialIsPlaying && !isPlaying) {
-        // If we should be playing (e.g., after chapter change) but aren't currently playing
-        setTimeout(() => {
-          handlePlay();
-        }, 100);
+        handlePlay();
+      } else if (isPlaying) {
+        handlePlay();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enhancedParagraphs, currentParagraphIndex, playbackSpeed]);
+  }, [enhancedParagraphs, currentParagraphIndex]);
 
   const loadAndPlayAudio = useCallback(
     async (paragraph: EnhancedParagraph) => {
@@ -705,7 +694,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             preload="none"
             className="hidden"
             onEnded={() => {
-              setIsPlaying(false);
+              // setIsPlaying(false);
               setCurrentTime(0);
 
               // Auto-advance to next paragraph when current one finishes
@@ -722,6 +711,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 // If there's a next chapter and callback is provided, trigger chapter change
                 if (hasNextChapter && onChapterComplete) {
                   onChapterComplete();
+                  setIsPlaying(true);
                 } else {
                   // No more chapters, just stop playback
                   setIsPlaying(false);

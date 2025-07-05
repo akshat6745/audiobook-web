@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Chapter } from "../types";
 import { parseChapterTitle } from "../utils/config";
 
@@ -198,6 +198,10 @@ const ChapterList: React.FC<ChapterListProps> = ({
     );
   };
 
+  const parsedLatestChapterTitle = useMemo(() => {
+    return parseChapterTitle(chapters[0]?.chapterTitle ?? "");
+  }, [chapters]);
+
   return (
     <div className="px-4 max-w-6xl mx-auto">
       {/* Latest Chapter */}
@@ -225,7 +229,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
                   </span>
                 </div>
                 <h3 className="text-white font-bold text-2xl mb-2 leading-tight">
-                  {parseChapterTitle(chapters[0].chapterTitle).title}
+                  {parsedLatestChapterTitle.title}
                 </h3>
                 <div className="flex items-center space-x-4 text-slate-400">
                   <span className="flex items-center space-x-2">

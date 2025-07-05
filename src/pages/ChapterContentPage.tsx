@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import ChapterContent from "../components/ChapterContent";
 import AudioPlayer from "../components/AudioPlayer";
@@ -216,8 +222,10 @@ const ChapterContentPage: React.FC = () => {
         {
           state: {
             lastChapterNumber,
-            isLastChapter: lastChapterNumber ? newChapterNumber === lastChapterNumber : false
-          }
+            isLastChapter: lastChapterNumber
+              ? newChapterNumber === lastChapterNumber
+              : false,
+          },
         }
       );
     }
@@ -230,8 +238,10 @@ const ChapterContentPage: React.FC = () => {
       {
         state: {
           lastChapterNumber,
-          isLastChapter: lastChapterNumber ? newChapterNumber === lastChapterNumber : false
-        }
+          isLastChapter: lastChapterNumber
+            ? newChapterNumber === lastChapterNumber
+            : false,
+        },
       }
     );
   };
@@ -265,7 +275,7 @@ const ChapterContentPage: React.FC = () => {
     if (lastChapterNumber) {
       return currentChapterNumber < lastChapterNumber;
     }
-    
+
     // Fallback: assume there could be a next chapter if we don't have the information
     // This maintains the existing behavior when navigation state is not available
     return true;
@@ -328,6 +338,12 @@ const ChapterContentPage: React.FC = () => {
       setIsDownloading(false);
     }
   };
+
+  const parsedChapterTitle = useMemo(() => {
+    return parseChapterTitle(
+      chapterContent?.chapterTitle ?? `Chapter ${currentChapterNumber}`
+    );
+  }, [chapterContent, currentChapterNumber]);
 
   if (loading) {
     return (
@@ -451,31 +467,32 @@ const ChapterContentPage: React.FC = () => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-3 mb-1">
                     <h1 className="text-xl font-bold text-white truncate">
-                      {
-                        parseChapterTitle(
-                          chapterContent?.chapterTitle ||
-                            `Chapter ${currentChapterNumber}`
-                        ).title
-                      }
+                      {parsedChapterTitle.title}
                     </h1>
-                    {isLastChapter && lastChapterNumber === currentChapterNumber && (
-                      <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-amber-400/20 to-amber-600/20 border border-amber-400/30 rounded-full">
-                        <svg
-                          className="w-4 h-4 text-amber-400"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
-                        <span className="text-amber-300 text-sm font-medium">Final Chapter</span>
-                      </div>
-                    )}
+                    {isLastChapter &&
+                      lastChapterNumber === currentChapterNumber && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-amber-400/20 to-amber-600/20 border border-amber-400/30 rounded-full">
+                          <svg
+                            className="w-4 h-4 text-amber-400"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
+                          <span className="text-amber-300 text-sm font-medium">
+                            Final Chapter
+                          </span>
+                        </div>
+                      )}
                   </div>
                   <p className="text-sm text-slate-400 truncate">
                     {parseNovelName(novelName ?? "")} • {paragraphs.length}{" "}
                     paragraphs
                     {lastChapterNumber && (
-                      <span> • Chapter {currentChapterNumber} of {lastChapterNumber}</span>
+                      <span>
+                        {" "}
+                        • Chapter {currentChapterNumber} of {lastChapterNumber}
+                      </span>
                     )}
                   </p>
                 </div>
@@ -541,17 +558,26 @@ const ChapterContentPage: React.FC = () => {
 
                 <button
                   onClick={handleNextChapter}
-                  disabled={isLastChapter && lastChapterNumber === currentChapterNumber}
+                  disabled={
+                    isLastChapter && lastChapterNumber === currentChapterNumber
+                  }
                   className={`btn-modern px-4 py-2 glass border rounded-lg font-medium transition-all duration-300 focus-ring ${
                     isLastChapter && lastChapterNumber === currentChapterNumber
-                      ? 'border-amber-500/50 text-amber-300 opacity-60 cursor-not-allowed'
-                      : 'border-slate-600 text-slate-300 hover:text-white hover:border-primary-500/50'
+                      ? "border-amber-500/50 text-amber-300 opacity-60 cursor-not-allowed"
+                      : "border-slate-600 text-slate-300 hover:text-white hover:border-primary-500/50"
                   }`}
-                  title={isLastChapter && lastChapterNumber === currentChapterNumber ? "You've reached the last chapter" : "Go to next chapter"}
+                  title={
+                    isLastChapter && lastChapterNumber === currentChapterNumber
+                      ? "You've reached the last chapter"
+                      : "Go to next chapter"
+                  }
                 >
                   <span className="flex items-center space-x-2">
                     <span className="hidden sm:inline">
-                      {isLastChapter && lastChapterNumber === currentChapterNumber ? "Final Chapter" : "Next"}
+                      {isLastChapter &&
+                      lastChapterNumber === currentChapterNumber
+                        ? "Final Chapter"
+                        : "Next"}
                     </span>
                     <svg
                       className="w-4 h-4"
@@ -563,7 +589,12 @@ const ChapterContentPage: React.FC = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d={isLastChapter && lastChapterNumber === currentChapterNumber ? "M5 13l4 4L19 7" : "M9 5l7 7-7 7"}
+                        d={
+                          isLastChapter &&
+                          lastChapterNumber === currentChapterNumber
+                            ? "M5 13l4 4L19 7"
+                            : "M9 5l7 7-7 7"
+                        }
                       />
                     </svg>
                   </span>

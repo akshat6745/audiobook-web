@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Paragraph } from "../types";
 import { parseChapterTitle } from "../utils/config";
 import LoadingSpinner from "./LoadingSpinner";
@@ -28,6 +28,10 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
   lastChapterNumber = null,
   novelName,
 }) => {
+  const parsedChapterTitle = useMemo(
+    () => parseChapterTitle(chapterTitle ?? ""),
+    [chapterTitle]
+  );
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-16">
@@ -97,7 +101,7 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
           style={{ animationDelay: "0.2s" }}
         >
           <h1 className="text-4xl font-bold text-gradient mb-4 leading-tight">
-            {parseChapterTitle(chapterTitle).title}
+            {parsedChapterTitle.title}
           </h1>
         </div>
       )}
@@ -227,15 +231,15 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
-            
+
             <h2 className="text-3xl font-bold text-gradient mb-4">
               🎉 Congratulations! 🎉
             </h2>
-            
+
             <p className="text-xl text-white mb-4">
               You've completed the entire story!
             </p>
-            
+
             <div className="bg-slate-800/50 rounded-xl p-4 mb-6">
               <p className="text-amber-300 font-semibold text-lg mb-2">
                 {novelName ? `"${novelName}"` : "This amazing journey"}
@@ -244,12 +248,12 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
                 {lastChapterNumber} chapters • Complete
               </p>
             </div>
-            
+
             <p className="text-slate-400 mb-6 leading-relaxed">
-              Thank you for reading along! You've just finished an incredible story. 
-              Every chapter you read brought you closer to this moment.
+              Thank you for reading along! You've just finished an incredible
+              story. Every chapter you read brought you closer to this moment.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 text-emerald-300 rounded-full text-sm font-medium">
                 <svg
@@ -261,7 +265,7 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
                 </svg>
                 <span>Story Complete</span>
               </div>
-              
+
               <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/20 text-amber-300 rounded-full text-sm font-medium">
                 <svg
                   className="w-4 h-4"

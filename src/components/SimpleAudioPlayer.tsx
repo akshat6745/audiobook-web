@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Howl } from "howler";
 import { Paragraph } from "../types";
-import { generateAudioForParagraph } from "../utils/audioPlayerUtils";
+import { generateAudioForParagraph, getPreloadRange } from "../utils/audioPlayerUtils";
 import { DEFAULT_NARRATOR_VOICE, DEFAULT_DIALOGUE_VOICE, SPEED_OPTIONS } from "../utils/config";
 import { PlayArrow, Pause, SkipNext, SkipPrevious } from "@mui/icons-material";
 
@@ -20,6 +20,7 @@ interface AudioCache {
     howl: Howl;
     isLoaded: boolean;
     isLoading: boolean;
+    audioUrl?: string; // Store the blob URL for cleanup
   };
 }
 
@@ -42,13 +43,18 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
   const audioCache = useRef<AudioCache>({});
   const currentHowl = useRef<Howl | null>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
+  const loadingTracker = useRef<Set<number>>(new Set()); // Track paragraphs currently being loaded
 
   // Clean up audio cache
   const cleanupAudioCache = useCallback(() => {
-    Object.values(audioCache.current).forEach(({ howl }) => {
+    Object.values(audioCache.current).forEach(({ howl, audioUrl }) => {
       howl.unload();
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
     });
     audioCache.current = {};
+    loadingTracker.current.clear();
   }, []);
 
   // Load audio for a specific paragraph
@@ -58,7 +64,7 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
         paragraphIndex < 0 ||
         paragraphIndex >= paragraphs.length ||
         audioCache.current[paragraphIndex]?.isLoaded ||
-        audioCache.current[paragraphIndex]?.isLoading
+        loadingTracker.current.has(paragraphIndex) // Check if already loading
       ) {
         return;
       }
@@ -66,7 +72,8 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
       const paragraph = paragraphs[paragraphIndex];
       if (!paragraph) return;
 
-      // Mark as loading
+      // Mark as loading in both places
+      loadingTracker.current.add(paragraphIndex);
       audioCache.current[paragraphIndex] = {
         howl: new Howl({ src: [""] }), // Placeholder
         isLoaded: false,
@@ -90,24 +97,25 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
           dialogueVoice
         );
 
-        if (result.success && result.audioBlob) {
-          const audioUrl = URL.createObjectURL(result.audioBlob);
-          
+        if (result.success && result.audioBlob && result.audioUrl) {
           const howl = new Howl({
-            src: [audioUrl],
+            src: [result.audioUrl],
             format: ["mp3", "wav"],
             preload: true,
             onload: () => {
               if (audioCache.current[paragraphIndex]) {
                 audioCache.current[paragraphIndex].isLoaded = true;
                 audioCache.current[paragraphIndex].isLoading = false;
+                audioCache.current[paragraphIndex].audioUrl = result.audioUrl;
               }
+              loadingTracker.current.delete(paragraphIndex);
             },
             onloaderror: () => {
               console.error(`Failed to load audio for paragraph ${paragraphIndex}`);
               if (audioCache.current[paragraphIndex]) {
                 audioCache.current[paragraphIndex].isLoading = false;
               }
+              loadingTracker.current.delete(paragraphIndex);
             },
             onend: () => {
               setCurrentTime(0);
@@ -126,11 +134,19 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
           audioCache.current[paragraphIndex] = {
             howl,
             isLoaded: false, // Will be set to true in onload callback
-            isLoading: false,
+            isLoading: true,
+            audioUrl: result.audioUrl,
           };
+        } else {
+          // Failed to generate audio
+          loadingTracker.current.delete(paragraphIndex);
+          if (audioCache.current[paragraphIndex]) {
+            audioCache.current[paragraphIndex].isLoading = false;
+          }
         }
       } catch (error) {
         console.error(`Failed to generate audio for paragraph ${paragraphIndex}:`, error);
+        loadingTracker.current.delete(paragraphIndex);
         if (audioCache.current[paragraphIndex]) {
           audioCache.current[paragraphIndex].isLoading = false;
         }
@@ -139,18 +155,44 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
     [paragraphs, narratorVoice, dialogueVoice, onParagraphChange]
   );
 
-  // Preload current and next paragraph
+  // Preload paragraphs using intelligent range calculation
   const preloadAudio = useCallback(
     async (centerIndex: number) => {
-      // Load current paragraph first
-      await loadParagraphAudio(centerIndex);
+      // Convert paragraphs to enhanced format for getPreloadRange
+      const enhancedParagraphs = paragraphs.map((p, index) => ({
+        paragraphNumber: index,
+        text: p.text,
+        isLoading: loadingTracker.current.has(index) || audioCache.current[index]?.isLoading || false,
+        audioData: null,
+        audioBlob: audioCache.current[index]?.isLoaded ? new Blob() : null, // Mock for range calculation
+        errors: null,
+        audioUrl: audioCache.current[index]?.audioUrl,
+      }));
+
+      // Get the range of paragraphs to preload
+      const { start, end } = getPreloadRange(centerIndex, paragraphs.length, enhancedParagraphs);
       
-      // Then preload next paragraph
-      if (centerIndex + 1 < paragraphs.length) {
-        loadParagraphAudio(centerIndex + 1);
+      // Load current paragraph first (priority)
+      if (!audioCache.current[centerIndex]?.isLoaded && !loadingTracker.current.has(centerIndex)) {
+        await loadParagraphAudio(centerIndex);
+      }
+      
+      // Load remaining paragraphs in parallel (excluding current paragraph)
+      const loadPromises: Promise<void>[] = [];
+      for (let i = start; i <= end; i++) {
+        if (i !== centerIndex && !audioCache.current[i]?.isLoaded && !loadingTracker.current.has(i)) {
+          loadPromises.push(loadParagraphAudio(i));
+        }
+      }
+      
+      if (loadPromises.length > 0) {
+        // Don't await these - let them load in background
+        Promise.all(loadPromises).catch(error => {
+          console.warn('Background preloading failed:', error);
+        });
       }
     },
-    [loadParagraphAudio, paragraphs.length]
+    [loadParagraphAudio, paragraphs]
   );
 
   // Update progress
@@ -314,15 +356,17 @@ const SimpleAudioPlayer: React.FC<SimpleAudioPlayerProps> = ({
           setPendingPlay(false);
           setIsLoading(false);
           startProgressTracking();
-        } else if (!cachedAudio?.isLoaded && !cachedAudio?.isLoading) {
-          // If audio isn't ready yet, trigger handlePlay to load and play
-          handlePlay();
+        } else if (!cachedAudio?.isLoaded) {
+          // Audio is still loading (paragraph change effect already started the loading)
+          // Just set pending play state and let the loading complete
+          setPendingPlay(true);
+          setIsLoading(true);
         }
       }, 100);
       
       return () => clearTimeout(timer);
     }
-  }, [isPlaying, currentParagraphIndex, startProgressTracking, handlePlay, playbackSpeed]);
+  }, [isPlaying, currentParagraphIndex, startProgressTracking, playbackSpeed]);
 
   // Watch for audio becoming available when we have a pending play request
   useEffect(() => {

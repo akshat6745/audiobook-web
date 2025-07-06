@@ -20,6 +20,37 @@ const SimpleAudioPlayerDemo: React.FC = () => {
       text: "This is the third and final paragraph in our demo. You can use the navigation controls to move between paragraphs.",
       index: 2,
     },
+    {
+      text: "Finally, this is the fourth paragraph. It serves as a longer piece of text to demonstrate how the player handles different lengths of content.",
+      index: 3,
+    },
+    {      text: "And this is the fifth paragraph. It continues to showcase the audio player's capabilities with a bit more content.",
+      index: 4,
+    },
+    {
+      text: "And this is the fifth paragraph. It continues to showcase the audio player's capabilities with a bit more content.",
+      index: 5,
+    },
+    {
+      text: "And this is the sixth paragraph. It adds even more content to showcase the audio player's capabilities.",
+      index: 6,
+    },
+    {
+      text: "And this is the seventh paragraph. It continues to showcase the audio player's capabilities with a bit more content.",
+      index: 7,
+    },
+    {
+      text: "And this is the eighth paragraph. It adds even more content to showcase the audio player's capabilities.",
+      index: 8,
+    },
+    {
+      text: "And this is the ninth paragraph. It continues to showcase the audio player's capabilities with a bit more content.",
+      index: 9,
+    },
+    {
+      text: "And this is the tenth paragraph. It adds even more content to showcase the audio player's capabilities.",
+      index: 10,
+    },
   ];
 
   const handleParagraphChange = (index: number) => {
@@ -108,9 +139,9 @@ const SimpleAudioPlayerDemo: React.FC = () => {
               <h4 className="font-medium text-white mb-2">Audio Management</h4>
               <ul className="text-sm space-y-1">
                 <li>• Built with Howler.js for robust audio handling</li>
-                <li>• Automatic preloading of next paragraph</li>
-                <li>• Memory-efficient audio caching</li>
-                <li>• Automatic cleanup of unused audio</li>
+                <li>• Intelligent preloading based on content length (1500+ chars)</li>
+                <li>• Duplicate API call prevention with loading tracker</li>
+                <li>• Memory-efficient audio caching with cleanup</li>
                 <li>• Variable playback speed (0.5× to 2×)</li>
               </ul>
             </div>

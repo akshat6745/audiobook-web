@@ -6,7 +6,8 @@ A lightweight audio player component built with Howler.js for playing short para
 
 ### Audio Management
 - **Howler.js Integration**: Built on the robust Howler.js library for reliable cross-browser audio support
-- **Smart Preloading**: Automatically preloads the next paragraph's audio for seamless transitions
+- **Intelligent Preloading**: Uses the same smart preloading algorithm as the main AudioPlayer, loading paragraphs until 1500+ characters are cached
+- **Duplicate Prevention**: Loading tracker prevents the same paragraph from being requested multiple times
 - **Memory Efficient**: Intelligent caching system that cleans up unused audio to save memory
 - **Auto-advance**: Automatically plays the next paragraph when the current one finishes
 
@@ -71,8 +72,9 @@ The player maintains an intelligent cache that:
 
 ### Preloading Strategy
 - Current paragraph is loaded with highest priority
-- Next paragraph is preloaded for seamless transitions
+- Additional paragraphs are preloaded until 1500+ characters are cached
 - Audio generation happens asynchronously using the existing TTS service
+- Loading tracker prevents duplicate API calls for the same paragraph
 
 ### State Management
 - Uses React hooks for clean state management

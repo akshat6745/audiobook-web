@@ -10,6 +10,7 @@ import NovelsPage from "./pages/NovelsPage";
 import ChaptersPage from "./pages/ChaptersPage";
 import ChapterContentPage from "./pages/ChapterContentPage";
 import Navigation from "./components/Navigation";
+import SimpleAudioPlayerDemo from "./components/SimpleAudioPlayerDemo";
 import { getCurrentUsername } from "./utils/config";
 import "./styles/globals.css";
 import "./styles/components.css";
@@ -39,6 +40,7 @@ const App: React.FC = () => {
         <div className="relative z-10">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/simple-player-demo" element={<SimpleAudioPlayerDemo />} />
             <Route
               path="/novels"
               element={

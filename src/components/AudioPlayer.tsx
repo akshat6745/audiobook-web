@@ -64,6 +64,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [selectedVoice, setSelectedVoice] = useState(initialNarratorVoice);
   const [dialogueVoice, setDialogueVoice] = useState(initialDialogueVoice);
   const [playbackSpeed, setPlaybackSpeed] = useState(initialPlaybackSpeed);
+
+  // Update isPlaying state when initialIsPlaying prop changes
+  useEffect(() => {
+    if (initialIsPlaying && !isPlaying) {
+      setIsPlaying(true);
+    }
+  }, [initialIsPlaying, isPlaying]);
   const [enhancedParagraphs, setEnhancedParagraphs] = useState<
     EnhancedParagraph[]
   >([]);
@@ -185,7 +192,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       setDuration(0);
 
       // Start aggressive preloading centered on current paragraph
-      preloadAudioRange(currentParagraphIndex);
+      // Use a small delay to ensure audio element is properly reset before cleanup
+      const timeoutId = setTimeout(() => {
+        preloadAudioRange(currentParagraphIndex);
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentParagraphIndex, enhancedParagraphs.length, preloadAudioRange]);
@@ -250,6 +262,23 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enhancedParagraphs, currentParagraphIndex]);
 
+  // Handle initialIsPlaying prop to continue playback after chapter changes
+  useEffect(() => {
+    if (initialIsPlaying && enhancedParagraphs.length > 0 && currentParagraphIndex >= 0) {
+      // Set playing state and trigger audio loading/playing
+      setIsPlaying(true);
+      const currentParagraph = enhancedParagraphs[currentParagraphIndex];
+      if (currentParagraph?.audioBlob) {
+        // Audio is already loaded, start playing immediately
+        loadAndPlayAudio(currentParagraph);
+      } else {
+        // Audio not loaded yet, it will auto-play when ready due to isPlaying=true
+        preloadAudioRange(currentParagraphIndex);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialIsPlaying, enhancedParagraphs.length, currentParagraphIndex]);
+
   const loadAndPlayAudio = useCallback(
     async (paragraph: EnhancedParagraph) => {
       if (!audioRef.current) {
@@ -261,6 +290,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       try {
         // Use the stored URL if available, otherwise create a new one
         let audioUrl = paragraph.audioUrl;
+        
+        // If URL exists but blob is gone, recreate the URL
         if (!audioUrl && paragraph.audioBlob) {
           audioUrl = URL.createObjectURL(paragraph.audioBlob);
           // Update the paragraph with the new URL for future use
@@ -270,6 +301,14 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           if (paragraphIndex >= 0) {
             updateParagraph(paragraphIndex, { audioUrl });
           }
+        }
+
+        // If we have a URL but no blob, the URL might have been revoked
+        if (audioUrl && !paragraph.audioBlob) {
+          console.warn("Audio URL exists but blob is missing, may have been cleaned up");
+          // Try to regenerate the audio for this paragraph
+          preloadAudioRange(currentParagraphIndex);
+          return;
         }
 
         if (!audioUrl) {
@@ -287,13 +326,21 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         setIsPlaying(true);
       } catch (err) {
         console.error("Failed to play audio:", err);
+        
+        // If it's a network error (likely revoked blob), try to regenerate
+        if (err instanceof Error && err.message.includes("Failed to load")) {
+          console.log("Attempting to regenerate audio due to load failure");
+          preloadAudioRange(currentParagraphIndex);
+          return;
+        }
+        
         updateParagraph(currentParagraphIndex, {
           errors: "Failed to play audio. Please try again.",
         });
         setIsPlaying(false);
       }
     },
-    [playbackSpeed, currentParagraphIndex, updateParagraph, enhancedParagraphs]
+    [playbackSpeed, currentParagraphIndex, updateParagraph, enhancedParagraphs, preloadAudioRange]
   );
 
   const handlePlay = async () => {
@@ -310,11 +357,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         return;
       } catch (error) {
         console.error("Failed to resume playback, will try reloading.", error);
-        // Fallback to reloading if resume fails
+        // Clear the source and fallback to reloading
+        audioRef.current.src = "";
       }
     }
 
-    if (currentParagraph.audioBlob) {
+    if (currentParagraph.audioBlob && currentParagraph.audioUrl) {
       loadAndPlayAudio(currentParagraph);
     } else {
       // Audio is not loaded yet, trigger preloading for current range

@@ -135,6 +135,7 @@ export const getPreloadRange = (
 
 /**
  * Clean up audio URLs that are outside the preload range to free memory
+ * More conservative cleanup - only clean up paragraphs that are far from the current range
  */
 export const cleanupAudioOutsideRange = (
   paragraphs: EnhancedParagraph[],
@@ -146,13 +147,18 @@ export const cleanupAudioOutsideRange = (
     paragraphs
   );
 
+  // Add a buffer zone around the preload range to avoid aggressive cleanup
+  const bufferSize = 5; // Keep 5 additional paragraphs on each side
+  const bufferStart = Math.max(0, start - bufferSize);
+  const bufferEnd = Math.min(paragraphs.length - 1, end + bufferSize);
+
   return paragraphs.map((p, index) => {
-    // Keep audio for paragraphs in the preload range
-    if (index >= start && index <= end) {
+    // Keep audio for paragraphs in the preload range + buffer zone
+    if (index >= bufferStart && index <= bufferEnd) {
       return p;
     }
 
-    // Clean up audio for paragraphs outside the range
+    // Only clean up audio for paragraphs that are far outside the range
     if (p.audioUrl) {
       URL.revokeObjectURL(p.audioUrl);
     }

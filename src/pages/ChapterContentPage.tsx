@@ -64,7 +64,7 @@ const ChapterContentPage: React.FC = () => {
   });
 
   // Track if we're auto-advancing to continue playing
-  const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
+  // const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
 
   // Ref for auto-scrolling functionality
   const contentContainerRef = useRef<HTMLDivElement>(null);
@@ -143,23 +143,6 @@ const ChapterContentPage: React.FC = () => {
     setChapterInputValue(currentChapterNumber.toString());
   }, [currentChapterNumber]);
 
-  // Handle auto-play when new chapter loads after chapter completion
-  useEffect(() => {
-    if (
-      paragraphs.length > 0 &&
-      activeParagraphIndex === 0 &&
-      showAudioPlayer &&
-      isAutoAdvancing
-    ) {
-      // Delay resetting auto-advancing state to allow AudioPlayer to initialize properly
-      const timeoutId = setTimeout(() => {
-        setIsAutoAdvancing(false);
-      }, 500); // Give AudioPlayer time to initialize with initialIsPlaying={true}
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [paragraphs, activeParagraphIndex, showAudioPlayer, isAutoAdvancing]);
-
   // Auto-scroll to active paragraph when it changes
   useEffect(() => {
     if (activeParagraphIndex !== null && showAudioPlayer) {
@@ -217,6 +200,7 @@ const ChapterContentPage: React.FC = () => {
   const handlePreviousChapter = () => {
     if (currentChapterNumber > 1) {
       const newChapterNumber = currentChapterNumber - 1;
+      setActiveParagraphIndex(0);
       navigate(
         `/novels/${encodeURIComponent(novelName!)}/chapters/${newChapterNumber}`,
         {
@@ -233,6 +217,7 @@ const ChapterContentPage: React.FC = () => {
 
   const handleNextChapter = () => {
     const newChapterNumber = currentChapterNumber + 1;
+    setActiveParagraphIndex(0);
     navigate(
       `/novels/${encodeURIComponent(novelName!)}/chapters/${newChapterNumber}`,
       {
@@ -251,9 +236,6 @@ const ChapterContentPage: React.FC = () => {
   };
 
   const handleChapterComplete = () => {
-    // Mark that we're auto-advancing to continue playing
-    setIsAutoAdvancing(true);
-
     // When chapter is complete, automatically go to next chapter
     // The audio player should continue playing from the first paragraph of the next chapter
     handleNextChapter();
@@ -284,6 +266,7 @@ const ChapterContentPage: React.FC = () => {
   const handleChapterNavigation = () => {
     const targetChapter = parseInt(chapterInputValue, 10);
     if (!isNaN(targetChapter) && targetChapter > 0) {
+      setActiveParagraphIndex(0);
       navigate(
         `/novels/${encodeURIComponent(novelName!)}/chapters/${targetChapter}`
       );
@@ -674,7 +657,7 @@ const ChapterContentPage: React.FC = () => {
             initialPlaybackSpeed={audioSettings.playbackSpeed}
             initialNarratorVoice={audioSettings.narratorVoice}
             initialDialogueVoice={audioSettings.dialogueVoice}
-            initialIsPlaying={isAutoAdvancing}
+            // initialIsPlaying={isAutoAdvancing}
             onSettingsChange={handleAudioSettingsChange}
           />
         )}

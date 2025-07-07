@@ -38,7 +38,6 @@ interface AudioPlayerProps {
   initialPlaybackSpeed?: number; // Initial playback speed
   initialNarratorVoice?: string; // Initial narrator voice
   initialDialogueVoice?: string; // Initial dialogue voice
-  initialIsPlaying?: boolean; // Whether to start in playing state
   onSettingsChange?: (settings: {
     playbackSpeed: number;
     narratorVoice: string;
@@ -57,20 +56,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   initialPlaybackSpeed = SPEED_OPTIONS[2].value,
   initialNarratorVoice = DEFAULT_NARRATOR_VOICE,
   initialDialogueVoice = DEFAULT_DIALOGUE_VOICE,
-  initialIsPlaying = false,
   onSettingsChange,
 }) => {
-  const [isPlaying, setIsPlaying] = useState(initialIsPlaying);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(initialNarratorVoice);
   const [dialogueVoice, setDialogueVoice] = useState(initialDialogueVoice);
   const [playbackSpeed, setPlaybackSpeed] = useState(initialPlaybackSpeed);
 
-  // Update isPlaying state when initialIsPlaying prop changes
-  useEffect(() => {
-    if (initialIsPlaying && !isPlaying) {
-      setIsPlaying(true);
-    }
-  }, [initialIsPlaying, isPlaying]);
   const [enhancedParagraphs, setEnhancedParagraphs] = useState<
     EnhancedParagraph[]
   >([]);
@@ -264,7 +256,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   // Handle initialIsPlaying prop to continue playback after chapter changes
   useEffect(() => {
-    if (initialIsPlaying && enhancedParagraphs.length > 0 && currentParagraphIndex >= 0) {
+    if (enhancedParagraphs.length > 0 && currentParagraphIndex >= 0) {
       // Set playing state and trigger audio loading/playing
       setIsPlaying(true);
       const currentParagraph = enhancedParagraphs[currentParagraphIndex];
@@ -277,7 +269,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialIsPlaying, enhancedParagraphs.length, currentParagraphIndex]);
+  }, [enhancedParagraphs.length, currentParagraphIndex]);
 
   const loadAndPlayAudio = useCallback(
     async (paragraph: EnhancedParagraph) => {

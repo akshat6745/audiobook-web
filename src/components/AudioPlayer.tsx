@@ -317,6 +317,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         await audio.play();
         setIsPlaying(true);
       } catch (err) {
+        // Check if it's an AbortError due to interrupted play request
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          // This is expected when paragraph changes interrupt play requests, just return silently
+          return;
+        }
+        
         console.error("Failed to play audio:", err);
         
         // If it's a network error (likely revoked blob), try to regenerate
@@ -348,7 +354,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         setIsPlaying(true);
         return;
       } catch (error) {
-        console.error("Failed to resume playback, will try reloading.", error);
+        // Check if it's an AbortError due to interrupted play request
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          // This is expected when paragraph changes interrupt play requests, just continue silently
+        } else {
+          console.error("Failed to resume playbook, will try reloading.", error);
+        }
         // Clear the source and fallback to reloading
         audioRef.current.src = "";
       }

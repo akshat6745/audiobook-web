@@ -160,11 +160,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           loadingRef.current.delete(index);
         }
       }
-
-      // Clean up audio outside the preload range to save memory
-      setEnhancedParagraphs((prev) =>
-        cleanupAudioOutsideRange(prev, centerIndex)
-      );
     },
     [selectedVoice, dialogueVoice, updateParagraph]
   );

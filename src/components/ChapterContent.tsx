@@ -100,9 +100,51 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
           className="text-center mb-12 animate-fade-in-up"
           style={{ animationDelay: "0.2s" }}
         >
-          <h1 className="text-4xl font-bold text-gradient mb-4 leading-tight">
-            {parsedChapterTitle.title}
-          </h1>
+          <div
+            data-paragraph-index={-1}
+            className={`
+              paragraph-item glass-dark p-6 rounded-xl cursor-pointer transition-all duration-300 border relative overflow-hidden inline-block
+              ${
+                activeParagraphIndex === -1
+                  ? "border-primary-500/50 bg-primary-500/10 shadow-glow scale-[1.01]"
+                  : "border-slate-700/50 hover:border-primary-500/30 hover:bg-primary-500/5"
+              }
+            `}
+            onClick={() => onParagraphClick(-1)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onParagraphClick(-1);
+              }
+            }}
+            aria-label="Chapter title"
+          >
+            {/* Gradient accent line for active chapter title */}
+            {activeParagraphIndex === -1 && (
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-400 to-accent-500 rounded-r-full" />
+            )}
+            
+            <h1 className={`text-4xl font-bold mb-4 leading-tight transition-all duration-300 ${
+              activeParagraphIndex === -1 ? "text-white" : "text-gradient hover:text-white"
+            }`}>
+              {parsedChapterTitle.title}
+            </h1>
+            
+            {/* Chapter title metadata */}
+            <div className="flex justify-center items-center mt-3 pt-3 border-t border-slate-700/30">
+              <span className="text-xs text-slate-400 font-medium">
+                Chapter Title
+              </span>
+              {activeParagraphIndex === -1 && (
+                <div className="flex items-center space-x-2 text-xs text-primary-400 ml-4">
+                  <div className="w-2 h-2 bg-primary-400 rounded-full animate-pulse-glow" />
+                  <span className="font-medium">Now Reading</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -191,7 +233,7 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
                   <path d="M8 5v14l11-7z" />
                 </svg>
                 <span className="text-primary-300">
-                  Paragraph {activeParagraphIndex + 1}
+                  {activeParagraphIndex === -1 ? "Chapter Title" : `Paragraph ${activeParagraphIndex + 1}`}
                 </span>
               </div>
             </>

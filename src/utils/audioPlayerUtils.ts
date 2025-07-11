@@ -18,6 +18,42 @@ export const initializeEnhancedParagraphs = (
   }));
 };
 
+export const initializeEnhancedParagraphsWithChapter = (
+  paragraphs: Paragraph[],
+  chapterName?: string
+): EnhancedParagraph[] => {
+  const enhancedParagraphs: EnhancedParagraph[] = [];
+  
+  // Add chapter name as first paragraph if provided
+  if (chapterName) {
+    enhancedParagraphs.push({
+      paragraphNumber: 0, // Use 0 to indicate this is the chapter name
+      text: chapterName,
+      isLoading: false,
+      audioData: null,
+      audioBlob: null,
+      errors: null,
+      audioUrl: undefined,
+    });
+  }
+  
+  // Add regular paragraphs, adjusting numbering to account for chapter name
+  const startIndex = chapterName ? 1 : 0;
+  paragraphs.forEach((paragraph, index) => {
+    enhancedParagraphs.push({
+      paragraphNumber: startIndex + index + 1,
+      text: paragraph.text,
+      isLoading: false,
+      audioData: null,
+      audioBlob: null,
+      errors: null,
+      audioUrl: undefined,
+    });
+  });
+  
+  return enhancedParagraphs;
+};
+
 export const cleanupAudioUrls = (paragraphs: EnhancedParagraph[]): void => {
   paragraphs.forEach((paragraph) => {
     if (paragraph.audioData) {

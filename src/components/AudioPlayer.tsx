@@ -10,12 +10,12 @@ import {
 } from "../utils/config";
 import {
   initializeEnhancedParagraphs,
+  initializeEnhancedParagraphsWithChapter,
   cleanupAudioUrls,
   clearAudioDataForVoiceChange,
   calculateNextSpeed,
   generateAudioForParagraph,
   updateParagraphInList,
-  cleanupAudioOutsideRange,
   getParagraphsToLoad,
 } from "../utils/audioPlayerUtils";
 import {
@@ -43,6 +43,7 @@ interface AudioPlayerProps {
     narratorVoice: string;
     dialogueVoice: string;
   }) => void; // Callback when settings change
+  chapterName?: string; // Chapter name to be played as first audio
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
@@ -57,6 +58,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   initialNarratorVoice = DEFAULT_NARRATOR_VOICE,
   initialDialogueVoice = DEFAULT_DIALOGUE_VOICE,
   onSettingsChange,
+  chapterName,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(initialNarratorVoice);
@@ -81,8 +83,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   // Initialize enhanced paragraphs from basic paragraphs
   useEffect(() => {
-    setEnhancedParagraphs(initializeEnhancedParagraphs(paragraphs));
-  }, [paragraphs]);
+    if (chapterName) {
+      setEnhancedParagraphs(initializeEnhancedParagraphsWithChapter(paragraphs, chapterName));
+    } else {
+      setEnhancedParagraphs(initializeEnhancedParagraphs(paragraphs));
+    }
+  }, [paragraphs, chapterName]);
 
   // Clean up audio URLs when component unmounts
   useEffect(() => {
@@ -595,7 +601,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
               {/* Progress Info */}
               <div className="flex-1 text-center bg-slate-800/40 rounded-lg py-1 px-2 border border-slate-600/30">
                 <div className="text-xs text-slate-200 font-semibold">
-                  {currentParagraphIndex + 1}/{enhancedParagraphs.length}
+                  {chapterName && currentParagraphIndex === 0 
+                    ? "0" 
+                    : `${chapterName ? currentParagraphIndex : currentParagraphIndex + 1}`}/{chapterName ? enhancedParagraphs.length - 1 : enhancedParagraphs.length}
                 </div>
                 {duration > 0 && (
                   <div className="text-xs text-slate-400">

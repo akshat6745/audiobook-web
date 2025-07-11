@@ -194,7 +194,21 @@ const ChapterContentPage: React.FC = () => {
   };
 
   const handleParagraphChange = (index: number) => {
-    setActiveParagraphIndex(index);
+    // Map audio player index back to display index
+    // Index 0 maps to chapter title (-1), index 1+ maps to paragraph index - 1
+    const displayIndex = chapterContent?.chapterTitle 
+      ? (index === 0 ? -1 : index - 1)
+      : index;
+    
+    setActiveParagraphIndex(displayIndex);
+  };
+
+  // Convert display index to audio player index
+  const getAudioPlayerIndex = (displayIndex: number) => {
+    if (chapterContent?.chapterTitle) {
+      return displayIndex === -1 ? 0 : displayIndex + 1;
+    }
+    return displayIndex;
   };
 
   const handlePreviousChapter = () => {
@@ -648,7 +662,7 @@ const ChapterContentPage: React.FC = () => {
         activeParagraphIndex !== null && (
           <AudioPlayer
             paragraphs={paragraphs}
-            currentParagraphIndex={activeParagraphIndex}
+            currentParagraphIndex={getAudioPlayerIndex(activeParagraphIndex)}
             onParagraphChange={handleParagraphChange}
             onClose={() => setShowAudioPlayer(false)}
             isVisible={showAudioPlayer}
@@ -659,6 +673,7 @@ const ChapterContentPage: React.FC = () => {
             initialDialogueVoice={audioSettings.dialogueVoice}
             // initialIsPlaying={isAutoAdvancing}
             onSettingsChange={handleAudioSettingsChange}
+            chapterName={chapterContent?.chapterTitle}
           />
         )}
 
@@ -667,7 +682,9 @@ const ChapterContentPage: React.FC = () => {
         <div className="px-4 pb-8">
           <button
             onClick={() => {
-              setActiveParagraphIndex(0);
+              // Start from chapter title if it exists, otherwise start from first paragraph
+              const startIndex = chapterContent?.chapterTitle ? -1 : 0;
+              setActiveParagraphIndex(startIndex);
               setShowAudioPlayer(true);
             }}
             className="w-full p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] font-medium"

@@ -255,7 +255,7 @@ const ChapterContentPage: React.FC = () => {
     handleNextChapter();
 
     // Reset to first paragraph
-    setActiveParagraphIndex(0);
+    setActiveParagraphIndex(-1);
   };
 
   const handleAudioSettingsChange = (settings: {

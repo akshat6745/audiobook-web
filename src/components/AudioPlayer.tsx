@@ -92,16 +92,15 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   // Clean up audio URLs when component unmounts
   useEffect(() => {
-    const currentAudioRef = audioRef.current;
     return () => {
       // Clean up the current audio source
-      if (currentAudioRef?.src && currentAudioRef.src.startsWith("blob:")) {
-        URL.revokeObjectURL(currentAudioRef.src);
+      if (audioRef.current?.src && audioRef.current.src.startsWith("blob:")) {
+        URL.revokeObjectURL(audioRef.current.src);
       }
-      // Clean up all stored blob URLs
-      cleanupAudioUrls(enhancedParagraphs);
+      // Clean up all stored blob URLs using the ref to get latest value
+      cleanupAudioUrls(enhancedParagraphsRef.current);
     };
-  }, [enhancedParagraphs]);
+  }, []); // Empty dependency array - only run on mount/unmount
 
   // Helper function to update a specific paragraph
   const updateParagraph = useCallback(

@@ -9,7 +9,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import ChapterContent from "../components/ChapterContent";
 import AudioPlayer from "../components/AudioPlayer";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { fetchChapterContent, saveUserProgress } from "../services/api";
+import { fetchChapterContent, saveUserProgress, fetchChapters } from "../services/api";
 import { ChapterContent as ChapterContentType, Paragraph } from "../types";
 import {
   getCurrentUsername,
@@ -69,6 +69,8 @@ const ChapterContentPage: React.FC = () => {
   // Ref for auto-scrolling functionality
   const contentContainerRef = useRef<HTMLDivElement>(null);
 
+
+
   const currentChapterNumber = parseInt(chapterNumber || "1", 10);
   const username = getCurrentUsername();
   const [chapterInputValue, setChapterInputValue] = useState(
@@ -117,7 +119,24 @@ const ChapterContentPage: React.FC = () => {
     loadChapterContent();
   }, [novelName, chapterNumber, loadChapterContent]);
 
-  // Update last chapter information when navigation state changes
+  // Fetch last chapter number if not provided (coming from Novels page)
+  const fetchLastChapterNumber = useCallback(async () => {
+    if (!novelName || lastChapterNumber) return; // Already have it or no novel name
+    
+    try {
+      // Fetch the first page to get total pages, then fetch last page to get highest chapter number
+      const firstPageData = await fetchChapters(decodeURIComponent(novelName), 1);
+      const lastPageData = await fetchChapters(decodeURIComponent(novelName), firstPageData.total_pages);
+      const maxChapterNumber = Math.max(...lastPageData.chapters.map(ch => ch.chapterNumber));
+      
+      setLastChapterNumber(maxChapterNumber);
+      setIsLastChapter(currentChapterNumber === maxChapterNumber);
+    } catch (error) {
+      console.error("Failed to fetch last chapter number:", error);
+    }
+  }, [novelName, lastChapterNumber, currentChapterNumber]);
+
+  // Update last chapter information when navigation state changes or fetch if needed
   useEffect(() => {
     if (navigationState) {
       if (navigationState.lastChapterNumber) {
@@ -126,8 +145,11 @@ const ChapterContentPage: React.FC = () => {
       if (navigationState.isLastChapter !== undefined) {
         setIsLastChapter(navigationState.isLastChapter);
       }
+    } else {
+      // No navigation state means we came from Novels page, fetch last chapter number
+      fetchLastChapterNumber();
     }
-  }, [navigationState]);
+  }, [navigationState, fetchLastChapterNumber]);
 
   // Save reading progress when chapter loads
   useEffect(() => {
@@ -296,6 +318,8 @@ const ChapterContentPage: React.FC = () => {
       handleChapterNavigation();
     }
   };
+
+
 
   const handleDownloadChapter = async () => {
     if (!novelName || !currentChapterNumber) {
@@ -674,6 +698,8 @@ const ChapterContentPage: React.FC = () => {
             // initialIsPlaying={isAutoAdvancing}
             onSettingsChange={handleAudioSettingsChange}
             chapterName={chapterContent?.chapterTitle}
+            currentChapterNumber={currentChapterNumber}
+            lastChapterNumber={lastChapterNumber}
           />
         )}
 

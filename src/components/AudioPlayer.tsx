@@ -44,6 +44,8 @@ interface AudioPlayerProps {
     dialogueVoice: string;
   }) => void; // Callback when settings change
   chapterName?: string; // Chapter name to be played as first audio
+  currentChapterNumber?: number; // Current chapter number for validation
+  lastChapterNumber?: number | null; // Last chapter number for validation
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
@@ -59,6 +61,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   initialDialogueVoice = DEFAULT_DIALOGUE_VOICE,
   onSettingsChange,
   chapterName,
+  currentChapterNumber,
+  lastChapterNumber,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(initialNarratorVoice);
@@ -92,10 +96,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   // Clean up audio URLs when component unmounts
   useEffect(() => {
+    const currentAudio = audioRef.current;
     return () => {
       // Clean up the current audio source
-      if (audioRef.current?.src && audioRef.current.src.startsWith("blob:")) {
-        URL.revokeObjectURL(audioRef.current.src);
+      if (currentAudio?.src && currentAudio.src.startsWith("blob:")) {
+        URL.revokeObjectURL(currentAudio.src);
       }
       // Clean up all stored blob URLs using the ref to get latest value
       cleanupAudioUrls(enhancedParagraphsRef.current);
@@ -609,6 +614,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                     {formatTime(currentTime)}/{formatTime(duration)}
                   </div>
                 )}
+
               </div>
 
               {/* Expand/Settings Toggle */}
@@ -761,8 +767,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                   audioRef.current.src = "";
                 }
 
+                // Check if we're on the last chapter using explicit chapter numbers if available
+                const isOnLastChapter = lastChapterNumber && currentChapterNumber 
+                  ? currentChapterNumber >= lastChapterNumber 
+                  : !hasNextChapter;
+
                 // If there's a next chapter and callback is provided, trigger chapter change
-                if (hasNextChapter && onChapterComplete) {
+                if (!isOnLastChapter && onChapterComplete) {
                   onChapterComplete();
                   setIsPlaying(true);
                 } else {

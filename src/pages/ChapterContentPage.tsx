@@ -9,7 +9,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import ChapterContent from "../components/ChapterContent";
 import AudioPlayer from "../components/AudioPlayer";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { fetchChapterContent, saveUserProgress, fetchChapters } from "../services/api";
+import { fetchChapterContent, saveUserProgress, fetchChapters, API_BASE_URL } from "../services/api";
 import { ChapterContent as ChapterContentType, Paragraph } from "../types";
 import {
   getCurrentUsername,
@@ -18,7 +18,6 @@ import {
   DEFAULT_NARRATOR_VOICE,
   DEFAULT_DIALOGUE_VOICE,
   SPEED_OPTIONS,
-  API_BASE_URL,
 } from "../utils/config";
 
 interface NavigationState {

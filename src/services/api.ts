@@ -11,7 +11,7 @@ import {
 } from "../types";
 
 // Base API URL - should match the Python backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
+export const API_BASE_URL = process.env.REACT_APP_API_URL || "https://audiobookpython-200053699763.asia-south2.run.app";
 
 const api = axios.create({
   baseURL: API_BASE_URL,

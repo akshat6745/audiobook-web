@@ -20,6 +20,13 @@ const api = axios.create({
   },
 });
 
+// Helper to get the correct identifier for a novel
+// Supabase novels use slug, EPUB novels use title
+export const getNovelIdentifier = (novel: Novel): string => {
+  return novel.source === "supabase" && novel.slug ? novel.slug : novel.title;
+};
+
+
 // Health check
 export const checkHealth = async (): Promise<{ status: string }> => {
   const response = await api.get("/health");

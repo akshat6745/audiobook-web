@@ -1,11 +1,12 @@
 import React from "react";
 import { Novel } from "../types";
+import { getNovelIdentifier } from "../services/api";
 
 interface NovelCardProps {
   novel: Novel;
   lastReadChapter?: number;
-  onRead: (novelName: string) => void;
-  onResume: (novelName: string, chapter: number) => void;
+  onRead: (novelIdentifier: string) => void;
+  onResume: (novelIdentifier: string, chapter: number) => void;
 }
 
 const NovelCard: React.FC<NovelCardProps> = ({
@@ -28,16 +29,31 @@ const NovelCard: React.FC<NovelCardProps> = ({
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-500/20 to-accent-500/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
 
       <div className="relative flex flex-col h-full">
-        {/* Header with source badge */}
+        {/* Header with source badge and status */}
         <div className="flex items-start justify-between mb-4">
-          <div
-            className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide ${
-              novel.source === "epub_upload"
-                ? "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-300 border border-emerald-500/30"
-                : "bg-gradient-to-r from-primary-500/20 to-primary-600/20 text-primary-300 border border-primary-500/30"
-            }`}
-          >
-            {novel.source === "epub_upload" ? "📚 EPUB" : "🌐 WEB NOVEL"}
+          <div className="flex items-center gap-2">
+            <div
+              className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide ${
+                novel.source === "epub_upload"
+                  ? "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-300 border border-emerald-500/30"
+                  : "bg-gradient-to-r from-primary-500/20 to-primary-600/20 text-primary-300 border border-primary-500/30"
+              }`}
+            >
+              {novel.source === "epub_upload" ? "📚 EPUB" : "🌐 WEB NOVEL"}
+            </div>
+            {novel.status && (
+              <div
+                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  novel.status === "Completed"
+                    ? "bg-emerald-500/20 text-emerald-300"
+                    : novel.status === "Ongoing"
+                    ? "bg-amber-500/20 text-amber-300"
+                    : "bg-slate-500/20 text-slate-300"
+                }`}
+              >
+                {novel.status}
+              </div>
+            )}
           </div>
 
           {lastReadChapter && (
@@ -98,6 +114,19 @@ const NovelCard: React.FC<NovelCardProps> = ({
                 <span>Last read: Chapter {lastReadChapter}</span>
               </p>
             )}
+
+            {novel.genres && novel.genres.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {novel.genres.slice(0, 3).map((genre) => (
+                  <span
+                    key={genre}
+                    className="px-2 py-0.5 bg-slate-700/50 text-slate-300 text-xs rounded-md"
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -106,7 +135,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
           {lastReadChapter ? (
             <div className="space-y-2">
               <button
-                onClick={() => onResume(novel.title, lastReadChapter)}
+                onClick={() => onResume(getNovelIdentifier(novel), lastReadChapter)}
                 className="w-full btn-modern bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-3 px-4 rounded-xl font-semibold shadow-glow hover:shadow-glow-lg transition-all duration-300 focus-ring"
               >
                 <span className="flex items-center justify-center space-x-2">
@@ -127,7 +156,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
                 </span>
               </button>
               <button
-                onClick={() => onRead(novel.title)}
+                onClick={() => onRead(getNovelIdentifier(novel))}
                 className="w-full btn-modern glass border border-slate-600 text-slate-300 hover:text-white hover:border-primary-500/50 py-3 px-4 rounded-xl font-medium transition-all duration-300 focus-ring"
               >
                 <span className="flex items-center justify-center space-x-2">
@@ -150,7 +179,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
             </div>
           ) : (
             <button
-              onClick={() => onRead(novel.title)}
+              onClick={() => onRead(getNovelIdentifier(novel))}
               className="w-full btn-modern bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 text-white py-3 px-4 rounded-xl font-semibold shadow-glow hover:shadow-glow-lg transition-all duration-300 focus-ring"
             >
               <span className="flex items-center justify-center space-x-2">

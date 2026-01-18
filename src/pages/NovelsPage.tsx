@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchNovels, fetchAllUserProgress } from "../services/api";
+import { fetchNovels, fetchAllUserProgress, getNovelIdentifier } from "../services/api";
 import { getCurrentUsername } from "../utils/config";
 import { Novel, ReadingProgress } from "../types";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -44,31 +44,47 @@ const NovelsPage: React.FC = () => {
         const mockNovels: Novel[] = [
           {
             id: "1",
+            slug: "the-great-adventure",
             title: "The Great Adventure",
             author: "John Smith",
             chapterCount: 25,
-            source: "google_doc",
+            source: "supabase",
+            status: "Completed",
+            genres: ["Fantasy", "Adventure"],
+            description: "An epic journey through uncharted lands.",
           },
           {
             id: "2",
+            slug: null,
             title: "Mystery of the Lost City",
             author: "Jane Doe",
             chapterCount: 18,
             source: "epub_upload",
+            status: null,
+            genres: null,
+            description: null,
           },
           {
             id: "3",
+            slug: "space-chronicles",
             title: "Space Chronicles",
             author: "Alex Johnson",
             chapterCount: 32,
-            source: "google_doc",
+            source: "supabase",
+            status: "Ongoing",
+            genres: ["Sci-Fi", "Action"],
+            description: "Adventures across the galaxy.",
           },
           {
             id: "4",
+            slug: null,
             title: "Tales from the Forest",
             author: "Emily Brown",
             chapterCount: 22,
             source: "epub_upload",
+            status: null,
+            genres: null,
+            description: null,
           },
         ];
         setNovels(mockNovels);
@@ -92,8 +108,8 @@ const NovelsPage: React.FC = () => {
     setShowUpload(false);
   };
 
-  const getLastReadChapter = (novelName: string): number | undefined => {
-    const entry = progress.find((p) => p.novelName === novelName);
+  const getLastReadChapter = (novelIdentifier: string): number | undefined => {
+    const entry = progress.find((p) => p.novelName === novelIdentifier);
     return entry?.lastChapterRead;
   };
 
@@ -292,15 +308,15 @@ const NovelsPage: React.FC = () => {
               >
                 <NovelCard
                   novel={novel}
-                  lastReadChapter={getLastReadChapter(novel.title)}
-                  onRead={(novelName) =>
+                  lastReadChapter={getLastReadChapter(getNovelIdentifier(novel))}
+                  onRead={(novelIdentifier) =>
                     navigate(
-                      `/novels/${encodeURIComponent(novelName)}/chapters`
+                      `/novels/${encodeURIComponent(novelIdentifier)}/chapters`
                     )
                   }
-                  onResume={(novelName, chapter) =>
+                  onResume={(novelIdentifier, chapter) =>
                     navigate(
-                      `/novels/${encodeURIComponent(novelName)}/chapters/${chapter}`
+                      `/novels/${encodeURIComponent(novelIdentifier)}/chapters/${chapter}`
                     )
                   }
                 />

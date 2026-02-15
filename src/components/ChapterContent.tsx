@@ -97,17 +97,15 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
       {/* Chapter Title */}
       {chapterTitle && (
         <div
-          className="text-center mb-12 animate-fade-in-up"
-          style={{ animationDelay: "0.2s" }}
+          className="text-center mb-12"
         >
           <div
             data-paragraph-index={-1}
             className={`
               paragraph-item glass-dark p-6 rounded-xl cursor-pointer transition-all duration-300 border relative overflow-hidden inline-block
-              ${
-                activeParagraphIndex === -1
-                  ? "border-primary-500/50 bg-primary-500/10 shadow-glow scale-[1.01]"
-                  : "border-slate-700/50 hover:border-primary-500/30 hover:bg-primary-500/5"
+              ${activeParagraphIndex === -1
+                ? "border-primary-500/50 bg-primary-500/10 shadow-glow scale-[1.01]"
+                : "border-slate-700/50 hover:border-primary-500/30 hover:bg-primary-500/5"
               }
             `}
             onClick={() => onParagraphClick(-1)}
@@ -125,13 +123,12 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
             {activeParagraphIndex === -1 && (
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-400 to-accent-500 rounded-r-full" />
             )}
-            
-            <h1 className={`text-4xl font-bold mb-4 leading-tight transition-all duration-300 ${
-              activeParagraphIndex === -1 ? "text-white" : "text-gradient hover:text-white"
-            }`}>
+
+            <h1 className={`text-4xl font-bold mb-4 leading-tight transition-all duration-300 ${activeParagraphIndex === -1 ? "text-white" : "text-gradient hover:text-white"
+              }`}>
               {parsedChapterTitle.title}
             </h1>
-            
+
             {/* Chapter title metadata */}
             <div className="flex justify-center items-center mt-3 pt-3 border-t border-slate-700/30">
               <span className="text-xs text-slate-400 font-medium">
@@ -154,11 +151,10 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
             key={index}
             data-paragraph-index={index}
             className={`
-              paragraph-item glass-dark p-4 rounded-xl cursor-pointer transition-all duration-300 border relative overflow-hidden animate-fade-in-up
-              ${
-                activeParagraphIndex === index
-                  ? "border-primary-500/50 bg-primary-500/10 shadow-glow scale-[1.01]"
-                  : "border-slate-700/50 hover:border-primary-500/30 hover:bg-primary-500/5"
+              paragraph-item glass-dark p-4 rounded-xl cursor-pointer transition-all duration-200 border relative overflow-hidden
+              ${activeParagraphIndex === index
+                ? "border-primary-500/50 bg-primary-500/10 shadow-glow scale-[1.01]"
+                : "border-slate-700/50 hover:border-primary-500/30 hover:bg-primary-500/5"
               }
             `}
             onClick={() => onParagraphClick(index)}
@@ -171,7 +167,6 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
               }
             }}
             aria-label={`Paragraph ${index + 1}`}
-            style={{ animationDelay: `${index * 0.1}s` }}
           >
             {/* Gradient accent line for active paragraph */}
             {activeParagraphIndex === index && (
@@ -181,10 +176,9 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
             <p
               className={`
                 text-lg leading-relaxed transition-all duration-300
-                ${
-                  activeParagraphIndex === index
-                    ? "text-white font-medium"
-                    : "text-slate-200 hover:text-white"
+                ${activeParagraphIndex === index
+                  ? "text-white font-medium"
+                  : "text-slate-200 hover:text-white"
                 }
               `}
               style={{ lineHeight: "1.8" }}
@@ -210,8 +204,7 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
 
       {/* Chapter Footer */}
       <div
-        className="mt-8 text-center glass-dark p-4 rounded-xl border border-slate-700/50 animate-fade-in-up"
-        style={{ animationDelay: `${paragraphs.length * 0.1 + 0.5}s` }}
+        className="mt-8 text-center glass-dark p-4 rounded-xl border border-slate-700/50"
       >
         <div className="flex items-center justify-center space-x-4 text-sm text-slate-400">
           <div className="flex items-center space-x-2">
@@ -260,11 +253,10 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
       {/* Congratulations Message for Last Chapter */}
       {isLastChapter && lastChapterNumber === chapterNumber && (
         <div
-          className="mt-12 text-center animate-fade-in-up"
-          style={{ animationDelay: `${paragraphs.length * 0.1 + 1}s` }}
+          className="mt-12 text-center"
         >
           <div className="glass-dark p-8 rounded-2xl border border-gradient-to-r from-amber-400/30 to-amber-600/30 shadow-glow-lg bg-gradient-to-br from-amber-400/5 to-amber-600/5">
-            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-glow-lg animate-float">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-glow-lg">
               <svg
                 className="w-10 h-10 text-white"
                 fill="currentColor"

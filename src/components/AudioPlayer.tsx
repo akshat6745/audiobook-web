@@ -287,7 +287,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       try {
         // Use the stored URL if available, otherwise create a new one
         let audioUrl = paragraph.audioUrl;
-        
+
         // If URL exists but blob is gone, recreate the URL
         if (!audioUrl && paragraph.audioBlob) {
           audioUrl = URL.createObjectURL(paragraph.audioBlob);
@@ -327,16 +327,16 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           // This is expected when paragraph changes interrupt play requests, just return silently
           return;
         }
-        
+
         console.error("Failed to play audio:", err);
-        
+
         // If it's a network error (likely revoked blob), try to regenerate
         if (err instanceof Error && err.message.includes("Failed to load")) {
           console.log("Attempting to regenerate audio due to load failure");
           preloadAudioRange(currentParagraphIndex);
           return;
         }
-        
+
         updateParagraph(currentParagraphIndex, {
           errors: "Failed to play audio. Please try again.",
         });
@@ -538,15 +538,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       >
         <div
           ref={nodeRef}
-          className="absolute bg-gradient-to-br from-slate-800/95 to-slate-900/95 border-2 border-primary-500/30 rounded-xl shadow-2xl shadow-primary-500/20 z-50 pointer-events-auto transition-all duration-300 backdrop-blur-xl w-96 hover:shadow-primary-500/30 hover:border-primary-500/50"
+          className="absolute bg-slate-800/95 border border-slate-600/50 rounded-xl shadow-xl z-50 pointer-events-auto transition-all duration-200 backdrop-blur-sm w-96"
         >
           {/* Compact Header with Controls */}
           <div
-            className="drag-handle cursor-move p-3 rounded-t-xl bg-gradient-to-r from-primary-600/20 to-accent-600/20 border-b border-primary-500/30"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 50%, rgba(14, 165, 233, 0.15) 100%)",
-            }}
+            className="drag-handle cursor-move p-3 rounded-t-xl bg-slate-700/40 border-b border-slate-600/40"
           >
             <div className="flex items-center gap-2">
               {/* Play/Pause Button */}
@@ -554,7 +550,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 onClick={isPlaying ? handlePause : handlePlay}
                 disabled={isCurrentLoading}
                 data-testid="play-button"
-                className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-600 text-white disabled:opacity-50 rounded-lg flex items-center justify-center shadow-md hover:scale-105 transition-all"
+                className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-600 text-white disabled:opacity-50 rounded-lg flex items-center justify-center shadow-md hover:opacity-90 transition-opacity"
               >
                 {isCurrentLoading ? (
                   <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
@@ -605,8 +601,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
               {/* Progress Info */}
               <div className="flex-1 text-center bg-slate-800/40 rounded-lg py-1 px-2 border border-slate-600/30">
                 <div className="text-xs text-slate-200 font-semibold">
-                  {chapterName && currentParagraphIndex === 0 
-                    ? "0" 
+                  {chapterName && currentParagraphIndex === 0
+                    ? "0"
                     : `${chapterName ? currentParagraphIndex : currentParagraphIndex + 1}`}/{chapterName ? enhancedParagraphs.length - 1 : enhancedParagraphs.length}
                 </div>
                 {duration > 0 && (
@@ -768,8 +764,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 }
 
                 // Check if we're on the last chapter using explicit chapter numbers if available
-                const isOnLastChapter = lastChapterNumber && currentChapterNumber 
-                  ? currentChapterNumber >= lastChapterNumber 
+                const isOnLastChapter = lastChapterNumber && currentChapterNumber
+                  ? currentChapterNumber >= lastChapterNumber
                   : !hasNextChapter;
 
                 // If there's a next chapter and callback is provided, trigger chapter change

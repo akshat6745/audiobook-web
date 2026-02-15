@@ -26,17 +26,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
 const App: React.FC = () => {
   return (
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800 text-slate-100 relative overflow-hidden">
-        {/* Background effects */}
-        <div className="fixed inset-0 bg-mesh opacity-50 pointer-events-none" />
-        <div className="fixed top-0 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl animate-float" />
-        <div
-          className="fixed bottom-0 right-1/4 w-80 h-80 bg-accent-500/10 rounded-full blur-3xl animate-float"
-          style={{ animationDelay: "1s" }}
-        />
-
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
         {/* Main content */}
-        <div className="relative z-10">
+        <div className="relative">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route

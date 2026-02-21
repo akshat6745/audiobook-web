@@ -524,6 +524,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     <div className="fixed inset-0 pointer-events-none z-50">
       <Draggable
         handle=".drag-handle"
+        cancel="button, select, input, .progress-bar"
         defaultPosition={{
           x: Math.max(
             20,
@@ -538,7 +539,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       >
         <div
           ref={nodeRef}
-          className="absolute bg-slate-800/95 border border-slate-600/50 rounded-xl shadow-xl z-50 pointer-events-auto transition-all duration-200 backdrop-blur-sm w-96"
+          className="absolute bg-slate-800/95 border border-slate-600/50 rounded-xl shadow-xl z-50 pointer-events-auto transition-all duration-200 backdrop-blur-sm w-[calc(100vw-2rem)] sm:w-96"
         >
           {/* Compact Header with Controls */}
           <div
@@ -639,7 +640,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             {/* Compact Progress Bar */}
             {duration > 0 && (
               <div
-                className="mt-2 h-2 bg-slate-800/60 rounded-full cursor-pointer relative overflow-hidden border border-slate-600/40"
+                className="mt-2 h-2 bg-slate-800/60 rounded-full cursor-pointer relative overflow-hidden border border-slate-600/40 progress-bar"
                 onClick={handleSeek}
               >
                 <div

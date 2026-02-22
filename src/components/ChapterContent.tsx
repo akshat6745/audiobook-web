@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Paragraph } from "../types";
-import { parseChapterTitle } from "../utils/config";
+import { parseChapterTitle, parseNovelName } from "../utils/config";
 import LoadingSpinner from "./LoadingSpinner";
 
 interface ChapterContentProps {
@@ -276,7 +276,7 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
 
             <div className="bg-slate-800/50 rounded-xl p-4 mb-6">
               <p className="text-amber-300 font-semibold text-lg mb-2">
-                {novelName ? `"${novelName}"` : "This amazing journey"}
+                {novelName ? `"${parseNovelName(novelName)}"` : "This amazing journey"}
               </p>
               <p className="text-slate-300">
                 {lastChapterNumber} chapters • Complete

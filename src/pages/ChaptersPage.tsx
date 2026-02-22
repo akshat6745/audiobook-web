@@ -5,7 +5,7 @@ import {
   fetchUserProgressForNovel,
   saveUserProgress,
 } from "../services/api";
-import { getCurrentUsername } from "../utils/config";
+import { getCurrentUsername, parseNovelName } from "../utils/config";
 import { Chapter, PaginatedChapters } from "../types";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ChapterList from "../components/ChapterList";
@@ -70,13 +70,13 @@ const ChaptersPage: React.FC = () => {
 
   const getLastChapterNumber = useCallback(async (): Promise<number> => {
     if (!novelName) return 1;
-    
+
     try {
       // If we're on the last page, find the highest chapter number
       if (currentPage === chaptersData.total_pages) {
         return Math.max(...chaptersData.chapters.map(ch => ch.chapterNumber));
       }
-      
+
       // If not on last page, fetch the last page to get the highest chapter number
       const lastPageData = await fetchChapters(decodeURIComponent(novelName), chaptersData.total_pages);
       return Math.max(...lastPageData.chapters.map(ch => ch.chapterNumber));
@@ -108,7 +108,7 @@ const ChaptersPage: React.FC = () => {
     const lastChapterNumber = await getLastChapterNumber();
 
     navigate(`/novels/${novelName}/chapters/${chapter.chapterNumber}`, {
-      state: { 
+      state: {
         chapterTitle: chapter.chapterTitle,
         lastChapterNumber: lastChapterNumber,
         isLastChapter: chapter.chapterNumber === lastChapterNumber
@@ -228,7 +228,7 @@ const ChaptersPage: React.FC = () => {
         <div className="mb-8 animate-fade-in-down">
           <div className="glass-dark p-6 rounded-2xl border border-slate-700/50 shadow-glow">
             <h1 className="text-4xl font-bold text-gradient mb-4">
-              {decodeURIComponent(novelName)}
+              {parseNovelName(decodeURIComponent(novelName))}
             </h1>
             <div className="flex items-center space-x-4 text-slate-400">
               <span className="flex items-center space-x-2">
@@ -290,7 +290,7 @@ const ChaptersPage: React.FC = () => {
                   onClick={async () => {
                     const lastChapterNumber = await getLastChapterNumber();
                     navigate(`/novels/${novelName}/chapters/${userProgress}`, {
-                      state: { 
+                      state: {
                         lastChapterNumber: lastChapterNumber,
                         isLastChapter: userProgress === lastChapterNumber
                       }

@@ -21,9 +21,9 @@ const api = axios.create({
 });
 
 // Helper to get the correct identifier for a novel
-// Supabase novels use slug, EPUB novels use title
+// cloudflare novels use slug, EPUB novels use title
 export const getNovelIdentifier = (novel: Novel): string => {
-  return novel.source === "supabase" && novel.slug ? novel.slug : novel.title;
+  return novel.slug || novel.title;
 };
 
 

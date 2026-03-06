@@ -34,8 +34,9 @@ export const checkHealth = async (): Promise<{ status: string }> => {
 };
 
 // Novel Management
-export const fetchNovels = async (): Promise<Novel[]> => {
-  const response = await api.get("/novels");
+export const fetchNovels = async (username?: string): Promise<Novel[]> => {
+  const params = username ? { username } : {};
+  const response = await api.get("/novels", { params });
   return response.data;
 };
 

@@ -20,11 +20,11 @@ const NovelsPage: React.FC = () => {
       setLoading(true);
 
       try {
-        // Try to fetch from API first
-        const [novelsData, username] = await Promise.all([
-          fetchNovels(),
-          getCurrentUsername(),
-        ]);
+        // Get username first
+        const username = getCurrentUsername();
+
+        // Fetch novels with username (for user-specific novels + public ones)
+        const novelsData = await fetchNovels(username || undefined);
 
         setNovels(novelsData);
         setError(null);
@@ -48,7 +48,7 @@ const NovelsPage: React.FC = () => {
             title: "The Great Adventure",
             author: "John Smith",
             chapterCount: 25,
-            source: "supabase",
+            source: "cloudflare_d1",
             status: "Completed",
             genres: ["Fantasy", "Adventure"],
             description: "An epic journey through uncharted lands.",
@@ -70,7 +70,7 @@ const NovelsPage: React.FC = () => {
             title: "Space Chronicles",
             author: "Alex Johnson",
             chapterCount: 32,
-            source: "supabase",
+            source: "cloudflare_d1",
             status: "Ongoing",
             genres: ["Sci-Fi", "Action"],
             description: "Adventures across the galaxy.",

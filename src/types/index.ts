@@ -4,12 +4,13 @@ export interface Novel {
   title: string;
   author: string | null;
   chapterCount: number | null;
-  source: "supabase" | "epub_upload";
+  source: "supabase" | "epub_upload" | "cloudflare_d1";
   status: string | null;
   genres: string[] | null;
   description: string | null;
   hasImages?: boolean;
   imageCount?: number;
+  isPublic?: boolean;
 }
 
 export interface Chapter {

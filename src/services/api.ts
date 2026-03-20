@@ -40,9 +40,12 @@ export const fetchNovels = async (username?: string): Promise<Novel[]> => {
   return response.data;
 };
 
-export const uploadEpub = async (file: File): Promise<ApiResponse> => {
+export const uploadEpub = async (file: File, username?: string): Promise<ApiResponse> => {
   const formData = new FormData();
   formData.append("file", file);
+  if (username) {
+    formData.append("username", username);
+  }
 
   const response = await api.post("/upload-epub", formData, {
     headers: {

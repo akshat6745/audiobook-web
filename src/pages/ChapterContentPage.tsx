@@ -153,7 +153,7 @@ const ChapterContentPage: React.FC = () => {
   // Save reading progress when chapter loads
   useEffect(() => {
     if (username && novelName && currentChapterNumber && chapterContent) {
-      saveUserProgress(username, novelName, currentChapterNumber).catch(
+      saveUserProgress(novelName, currentChapterNumber).catch(
         console.error
       );
     }

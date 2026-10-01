@@ -33,57 +33,59 @@ export const SPEED_OPTIONS = [
 // Local storage keys
 export const STORAGE_KEYS = {
   USERNAME: "audiobook_username",
-  LOGIN_EXPIRY: "audiobook_login_expiry",
+  ACCESS_TOKEN: "audiobook_access_token",
   AUDIO_SETTINGS: "audiobook_audio_settings",
   READING_PROGRESS: "audiobook_reading_progress",
 };
 
-// Login expiry duration (30 days in milliseconds)
-export const LOGIN_EXPIRY_DAYS = 30;
-export const LOGIN_EXPIRY_MS = LOGIN_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+// Session management.
+//
+// The access token is what proves identity — every user-scoped endpoint
+// derives the caller from it. There is deliberately no separate client-side
+// expiry: the token carries its own, and a second independent clock would
+// drift out of sync, leaving a UI that believes it is signed in while every
+// request 401s. An expired token is detected by the backend rejecting it.
 
-// Utility functions for user management
-export const getCurrentUsername = (): string | null => {
+export const getToken = (): string | null => {
   try {
-    const username = localStorage.getItem(STORAGE_KEYS.USERNAME);
-    const expiry = localStorage.getItem(STORAGE_KEYS.LOGIN_EXPIRY);
-
-    if (!username || !expiry) {
-      return null;
-    }
-
-    const expiryTime = parseInt(expiry, 10);
-    if (Date.now() > expiryTime) {
-      // Login expired
-      clearUserSession();
-      return null;
-    }
-
-    return username;
+    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   } catch (error) {
-    console.error("Error getting current username:", error);
+    console.error("Error reading access token");
     return null;
   }
 };
 
-export const setCurrentUsername = (username: string): void => {
+export const getCurrentUsername = (): string | null => {
   try {
-    const expiryTime = Date.now() + LOGIN_EXPIRY_MS;
-    localStorage.setItem(STORAGE_KEYS.USERNAME, username);
-    localStorage.setItem(STORAGE_KEYS.LOGIN_EXPIRY, expiryTime.toString());
+    // Without a token the username can't authorise anything, so a stored
+    // name on its own does not count as a session.
+    if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
+      return null;
+    }
+    return localStorage.getItem(STORAGE_KEYS.USERNAME);
   } catch (error) {
-    console.error("Error setting current username:", error);
+    console.error("Error getting current username");
+    return null;
+  }
+};
+
+export const setSession = (username: string, token: string): void => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.USERNAME, username);
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+  } catch (error) {
+    console.error("Error storing session");
   }
 };
 
 export const clearUserSession = (): void => {
   try {
     localStorage.removeItem(STORAGE_KEYS.USERNAME);
-    localStorage.removeItem(STORAGE_KEYS.LOGIN_EXPIRY);
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.AUDIO_SETTINGS);
     localStorage.removeItem(STORAGE_KEYS.READING_PROGRESS);
   } catch (error) {
-    console.error("Error clearing user session:", error);
+    console.error("Error clearing user session");
   }
 };
 

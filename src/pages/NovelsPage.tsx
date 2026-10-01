@@ -20,18 +20,16 @@ const NovelsPage: React.FC = () => {
       setLoading(true);
 
       try {
-        // Get username first
+        // The backend scopes the library to our access token.
         const username = getCurrentUsername();
-
-        // Fetch novels with username (for user-specific novels + public ones)
-        const novelsData = await fetchNovels(username || undefined);
+        const novelsData = await fetchNovels();
 
         setNovels(novelsData);
         setError(null);
 
         if (username) {
           try {
-            const progressData = await fetchAllUserProgress(username);
+            const progressData = await fetchAllUserProgress();
             setProgress(progressData.progress || []);
           } catch (err) {
             console.error("Failed to load progress:", err);

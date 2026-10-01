@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser, registerUser } from "../services/api";
-import { getCurrentUsername, setCurrentUsername } from "../utils/config";
+import { googleSignIn, loginUser, registerUser } from "../services/api";
+import { getCurrentUsername, setSession } from "../utils/config";
 import LoadingSpinner from "../components/LoadingSpinner";
+import GoogleButton from "../components/GoogleButton";
 
 const LoginPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -32,34 +33,47 @@ const LoginPage: React.FC = () => {
 
     try {
       if (isLogin) {
-        try {
-          // Try real API first
-          await loginUser(username, password);
-        } catch (apiError) {
-          // If API fails, use mock authentication for demo
-          console.log("API not available, using mock authentication");
-          // Just simulate a delay
-          await new Promise((resolve) => setTimeout(resolve, 500));
+        // The backend is the only thing that can validate credentials, so a
+        // failure here must leave the user signed OUT. This used to swallow
+        // every error — including a 401 — and fall through to a signed-in
+        // state, which let any password into any account.
+        const result = await loginUser(username, password);
+        const token = result?.access_token;
+        if (!token) {
+          // No token means no session, whatever else the response said.
+          throw new Error("Sign in failed. Please try again.");
         }
-        setCurrentUsername(username);
+        setSession(result.username ?? username, token);
         navigate("/novels");
       } else {
-        try {
-          // Try real API first
-          await registerUser(username, password);
-        } catch (apiError) {
-          // If API fails, use mock registration for demo
-          console.log("API not available, using mock registration");
-          // Just simulate a delay
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
+        await registerUser(username, password);
         setIsLogin(true);
-        setError(null);
         // Clear form
         setPassword("");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Google hands back an ID token; the backend verifies it and returns the
+  // account it maps to. As with the password path, only a returned access
+  // token counts as being signed in.
+  const handleGoogleCredential = async (idToken: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await googleSignIn(idToken);
+      const token = result?.access_token;
+      if (!token || !result.username) {
+        throw new Error("Couldn't sign in with Google. Please try again.");
+      }
+      setSession(result.username, token);
+      navigate("/novels");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't sign in with Google");
     } finally {
       setLoading(false);
     }
@@ -251,6 +265,17 @@ const LoginPage: React.FC = () => {
               </button>
             </div>
           </form>
+
+          {isLogin && (
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="flex-1 h-px bg-slate-700" />
+                <span className="text-xs text-slate-400 uppercase tracking-wide">or</span>
+                <div className="flex-1 h-px bg-slate-700" />
+              </div>
+              <GoogleButton onCredential={handleGoogleCredential} />
+            </div>
+          )}
         </div>
 
         {/* Features */}

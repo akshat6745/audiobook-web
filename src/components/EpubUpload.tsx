@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { uploadEpub } from "../services/api";
-import { useAuth } from "../hooks/useAuth";
 import LoadingSpinner from "./LoadingSpinner";
 
 interface EpubUploadProps {
@@ -12,7 +11,8 @@ const EpubUpload: React.FC<EpubUploadProps> = ({ onClose, onSuccess }) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { username } = useAuth();
+  // No username needed: the upload is attributed to whoever the access token
+  // belongs to, server-side.
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -37,7 +37,7 @@ const EpubUpload: React.FC<EpubUploadProps> = ({ onClose, onSuccess }) => {
     setError(null);
 
     try {
-      const result = await uploadEpub(file, username ?? undefined);
+      const result = await uploadEpub(file);
       onSuccess(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");

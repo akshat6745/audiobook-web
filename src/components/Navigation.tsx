@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getCurrentUsername, clearUserSession } from "../utils/config";
+import { forgetGoogleSelection } from "../services/googleIdentity";
+import LinkGoogleAccount from "./LinkGoogleAccount";
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +21,8 @@ const Navigation: React.FC = () => {
 
   const handleLogout = () => {
     clearUserSession();
+    // Otherwise Google may silently pick the same account on the next sign-in.
+    forgetGoogleSelection();
     navigate("/login");
   };
 
@@ -96,6 +100,8 @@ const Navigation: React.FC = () => {
                     <p className="text-white font-semibold">{username}</p>
                   </div>
                 </div>
+
+                <LinkGoogleAccount />
 
                 <button
                   onClick={handleLogout}

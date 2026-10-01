@@ -52,7 +52,6 @@ const ChaptersPage: React.FC = () => {
     if (username) {
       try {
         const progressData = await fetchUserProgressForNovel(
-          username,
           decodeURIComponent(novelName)
         );
         setUserProgress(progressData.lastChapterRead);
@@ -94,7 +93,6 @@ const ChaptersPage: React.FC = () => {
     if (username) {
       try {
         await saveUserProgress(
-          username,
           decodeURIComponent(novelName),
           chapter.chapterNumber
         );

@@ -71,6 +71,11 @@ export interface ApiResponse<T = any> {
   message?: string;
   detail?: string;
   data?: T;
+  // Present on a successful sign-in: the bearer token that authorises every
+  // subsequent user-scoped request.
+  access_token?: string;
+  token_type?: string;
+  username?: string;
 }
 
 export interface TtsRequest {

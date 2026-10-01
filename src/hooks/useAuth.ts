@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import {
   getCurrentUsername,
-  setCurrentUsername,
+  setSession,
   clearUserSession,
 } from "../utils/config";
 
 interface UseAuthReturn {
   username: string | null;
   isAuthenticated: boolean;
-  login: (username: string) => void;
+  /** Both halves are required: a username without a token is not a session. */
+  signIn: (username: string, token: string) => void;
   logout: () => void;
 }
 
@@ -20,8 +21,8 @@ export const useAuth = (): UseAuthReturn => {
     setUsername(currentUser);
   }, []);
 
-  const login = (newUsername: string) => {
-    setCurrentUsername(newUsername);
+  const signIn = (newUsername: string, token: string) => {
+    setSession(newUsername, token);
     setUsername(newUsername);
   };
 
@@ -33,7 +34,7 @@ export const useAuth = (): UseAuthReturn => {
   return {
     username,
     isAuthenticated: !!username,
-    login,
+    signIn,
     logout,
   };
 };

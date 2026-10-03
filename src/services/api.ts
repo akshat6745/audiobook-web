@@ -11,8 +11,8 @@ import {
 } from "../types";
 import { clearUserSession, getToken } from "../utils/config";
 
-// Base API URL - should match the Python backend
-export const API_BASE_URL = process.env.REACT_APP_API_URL || "https://audiobook-python.onrender.com";
+// Python backend (a GCP e2 instance) — the only server the web app talks to.
+export const API_BASE_URL = "https://34.3.108.45.sslip.io";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
